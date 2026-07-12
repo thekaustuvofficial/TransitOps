@@ -72,59 +72,111 @@ app.get('/api/data', async (req, res) => {
 // Smart Matchmaker API: Hybrid mode supporting both demo and production
 app.post('/api/dispatch/recommend', async (req, res) => {
   const isDemoMode = req.query.demo === 'true';
-  const { cargo_weight_kg, source_location } = req.body;
+  const { cargoWeightKg, source, destination, estimatedDurationHours = 2, plannedDistanceKm = 50 } = req.body;
 
-  if (!cargo_weight_kg || !source_location) {
-    return res.status(400).json({ error: "Missing cargo_weight_kg or source_location" });
+  if (!cargoWeightKg || !source) {
+    return res.status(400).json({ error: "Missing cargoWeightKg or source" });
   }
 
   try {
     let eligibleVehicles, eligibleDrivers;
+    const currentDate = new Date();
+    const SERVICE_INTERVAL_KM = 10000;
+    // LEGAL_DAILY_LIMIT_HOURS is mocked as 12
 
     if (isDemoMode) {
       const db = readDb();
-      eligibleVehicles = db.vehicles.filter(v => v.status === 'Available' && v.max_capacity_kg >= cargo_weight_kg);
-      eligibleDrivers = db.drivers.filter(d => d.status === 'Available');
-    } else {
-      const vRes = await pool.query(
-        "SELECT * FROM vehicles WHERE status = 'Available' AND max_capacity_kg >= $1",
-        [cargo_weight_kg]
+      eligibleVehicles = db.vehicles.filter(v => 
+        v.status === 'Available' && 
+        v.max_capacity_kg >= cargoWeightKg &&
+        (v.odometer_km - v.last_service_odometer_km) < SERVICE_INTERVAL_KM &&
+        new Date(v.insurance_expiry) >= currentDate
       );
-      const dRes = await pool.query("SELECT * FROM drivers WHERE status = 'Available'");
+      eligibleDrivers = db.drivers.filter(d => 
+        d.status === 'Available' &&
+        new Date(d.license_expiry) >= currentDate
+      );
+    } else {
+      // In production mode, we filter via PostgreSQL (Supabase) query
+      const vRes = await pool.query(
+        `SELECT * FROM vehicles 
+         WHERE status = 'Available' 
+         AND max_capacity_kg >= $1
+         AND (odometer_km - last_service_odometer_km) < $2
+         AND insurance_expiry >= CURRENT_DATE`,
+        [cargoWeightKg, SERVICE_INTERVAL_KM]
+      );
+      const dRes = await pool.query(
+        `SELECT * FROM drivers 
+         WHERE status = 'Available' 
+         AND license_expiry >= CURRENT_DATE`
+      );
       eligibleVehicles = vRes.rows;
       eligibleDrivers = dRes.rows;
     }
 
-    // Score Vehicles
-    eligibleVehicles = eligibleVehicles.map(v => {
-      let score = 0;
-      if (v.region === source_location || v.current_location === source_location) {
-        score += 50; 
-      }
-      score -= (v.odometer_km / 100000); 
-      return { ...v, matchScore: score };
-    }).sort((a, b) => b.matchScore - a.matchScore);
+    const matches = [];
 
-    // Score Drivers
-    eligibleDrivers = eligibleDrivers.map(d => {
-      let score = 0;
-      if (d.current_location === source_location) {
-        score += 50;
+    for (const truck of eligibleVehicles) {
+      for (const driver of eligibleDrivers) {
+        // License Category Check
+        const needsHMV = truck.type === 'Truck';
+        if (needsHMV && driver.license_category !== 'HMV') continue;
+        
+        const reasons = [];
+        let score = 0; // Lower score is better
+
+        // Proximity Matching
+        if (truck.current_location === source) {
+          score -= 50; 
+          reasons.push('Truck already at source');
+        } else {
+          score += 100; // Penalty for deadhead routing
+        }
+
+        if (driver.current_location === source) {
+          score -= 50;
+          reasons.push('Driver already at source');
+        } else if (driver.current_location === truck.current_location) {
+          score -= 20; 
+          reasons.push('Driver at truck location');
+        } else {
+          score += 100;
+        }
+
+        // Cost Optimization
+        const truckCostPerKm = Number(truck.acquisition_cost) / 1000000; 
+        const driverCostPerHour = driver.license_category === 'HMV' ? 200 : 150;
+        const estimatedCost = (truckCostPerKm * plannedDistanceKm) + (driverCostPerHour * estimatedDurationHours);
+        
+        score += estimatedCost;
+        reasons.push(`Estimated optimal cost: ₹${estimatedCost.toFixed(2)}`);
+
+        // Capacity Efficiency 
+        const wastedCapacity = truck.max_capacity_kg - cargoWeightKg;
+        if (wastedCapacity > 1000) {
+           score += (wastedCapacity / 100); 
+           reasons.push('Warning: Large unused capacity');
+        } else {
+           reasons.push('Optimal capacity match');
+        }
+
+        matches.push({
+          driver: { id: driver.id, name: driver.name, license_category: driver.license_category, current_location: driver.current_location },
+          vehicle: { id: truck.id, name: truck.name, reg_no: truck.reg_no, type: truck.type, current_location: truck.current_location },
+          score,
+          costEstimate: estimatedCost,
+          reasons
+        });
       }
-      score += (d.safety_score * 0.5);
-      return { ...d, matchScore: score };
-    }).sort((a, b) => b.matchScore - a.matchScore);
+    }
+
+    // Sort combinations by score (lowest score = highest efficiency)
+    matches.sort((a, b) => a.score - b.score);
 
     res.json({
       status: "success",
-      best_match: {
-        vehicle: eligibleVehicles[0] || null,
-        driver: eligibleDrivers[0] || null
-      },
-      alternatives: {
-        vehicles: eligibleVehicles.slice(1, 3),
-        drivers: eligibleDrivers.slice(1, 3)
-      }
+      matches: matches.slice(0, 5) // Return top 5 best Driver + Truck combinations
     });
   } catch (err) {
     console.error("Matchmaker error:", err);
