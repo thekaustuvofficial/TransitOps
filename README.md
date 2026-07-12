@@ -39,7 +39,7 @@ TransitOps/
 │   ├── src/              <-- Application code, types, state-machine DB, components, pages
 │   ├── public/           <-- Static assets
 │   ├── package.json      <-- Dependencies (lucide-react, recharts, tailwind, etc.)
-│   └── vite.config.ts    <-- Vite build setup
+│   └── vite.config.ts    <-- Vite build setup (local dev + prod builds)
 ├── backend/              <-- Express JSON API, seeded data, Odoo bundle, and Postgres schema draft
 │   ├── db.json          <-- Local demo database / API snapshot
 │   ├── server.js        <-- Express seed server used by the frontend
@@ -85,6 +85,7 @@ To prevent operational mistakes, TransitOps implements a state machine governed 
 *   **Live Dashboard & KPIs:** Fleet Utilization %, Active/Available Vehicles, In Maintenance count, Active/Pending Trips, and Drivers On Duty.
 *   **Smart Dispatch Assist:** Allocation forms auto-filter dropdowns to show only eligible vehicles (matching capacity limits) and active drivers. Includes validation block banners.
 *   **Live Activity Feed:** Real-time audit log widget showing system transitions in real time.
+*   **Responsive table sorting and filters:** Quickly scan and segment assets, trips, and expenses.
 *   **License Expiry Countdowns:** Badges showing remaining valid days for driver licenses (Red for Expired/Critical (<30d), Amber (<90d)).
 *   **Maintenance Due Indicators:** Flagging vehicles with warning badges if they exceed 10,000 km since their last service.
 *   **Cost Anomaly Highlights:** Flags vehicles spending 25% above the fleet average cost.
@@ -187,6 +188,7 @@ Segments the fleet into Long Haul, Short Trucks, and Small Carriers, each with i
    ```bash
    npm install
    ```
+   > Optional: use `npm install --legacy-peer-deps` if package compatibility warnings appear.
 3. Start the local development server:
    ```bash
    npm run dev
@@ -197,9 +199,25 @@ Segments the fleet into Long Haul, Short Trucks, and Small Carriers, each with i
    ```
 
 ---
+*Developed for modern logistics.*
+
+---
 
 ## License
 This project is licensed under the **MIT License**. See the [LICENSE](./LICENSE) file for details.
 
 ---
-*Developed for modern logistics.*
+
+## Future Scalability Scope
+
+TransitOps is currently a focused demo that demonstrates core fleet and dispatch workflows. Below is a plain-language roadmap describing how the project can evolve into a production-ready, multi-tenant SaaS product.
+
+- Architecture & Tenant Isolation: redesign data and request flow so each customer (tenant) has private data and controlled feature access.
+- Production REST API: add proper CRUD endpoints, input validation, pagination, bulk imports, and consistent error responses.
+- Billing & Subscriptions: integrate payments, meter usage, enforce plan quotas, and react to subscription events.
+- Frontend & Tenant UX: move the UI to an API-driven model with token-based auth, tenant settings, signup, and upgrade paths.
+- Cloud Deployment & Operations: containerize, use IaC, add managed databases, caching, CDN, autoscaling, monitoring, and logging.
+- Enterprise Features & Integrations: add MFA/SSO, localization, scheduled reporting, webhooks, and reseller/partner workflows.
+
+This summary is intentionally concise — a detailed roadmap file (`FUTURE_SCALABILITY.md`) has been added to the repository with the same plain-language explanation for stakeholders and contributors.
+
