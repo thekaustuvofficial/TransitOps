@@ -82,7 +82,7 @@ export default function Settings() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-rise-in">
       {/* Header */}
       <div>
         <h1 className="font-display text-xl font-bold tracking-tight text-[var(--color-text)] sm:text-2xl">

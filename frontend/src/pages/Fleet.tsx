@@ -3,10 +3,9 @@ import { useDb } from '../hooks/useDb';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { canEdit } from '../lib/permissions';
-import { StatusBadge } from '../components/StatusBadge';
 import { Button, Card, Input, Select, Field, Modal, Banner, CustomSelect } from '../components/primitives';
 import { fmtCurrency, fmtNumber } from '../lib/format';
-import { Plus, Edit2, AlertTriangle, ArrowUpDown } from 'lucide-react';
+import { Plus, Edit2, AlertTriangle, ArrowUpDown, Search, SlidersHorizontal } from 'lucide-react';
 import type { Vehicle, VehicleType, VehicleStatus } from '../types';
 import { RuleViolation } from '../lib/db';
 
@@ -19,15 +18,13 @@ type SortHeaderProps = Readonly<{
 
 function SortHeader({ field, children, activeField, onToggle }: SortHeaderProps) {
   return (
-    <th
-      className="px-4 py-3 font-medium cursor-pointer select-none hover:text-[var(--color-text)] transition-colors"
+    <span
+      className="inline-flex items-center gap-1 cursor-pointer select-none hover:text-[var(--color-text)] transition-colors"
       onClick={() => onToggle(field)}
     >
-      <span className="inline-flex items-center gap-1">
-        {children}
-        <ArrowUpDown size={10} className={activeField === field ? 'text-amber-500' : 'opacity-30'} />
-      </span>
-    </th>
+      {children}
+      <ArrowUpDown size={10} className={activeField === field ? 'text-amber-500' : 'opacity-30'} />
+    </span>
   );
 }
 
@@ -95,7 +92,7 @@ export default function Fleet() {
 
   const toggleSort = (key: keyof Vehicle) => {
     if (sortKey === key) {
-      setSortDir((d) => d === 'asc' ? 'desc' : 'asc');
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
     } else {
       setSortKey(key);
       setSortDir('asc');
@@ -134,6 +131,22 @@ export default function Fleet() {
     setModalOpen(true);
   };
 
+  const handleStatusChange = (vehicleId: string, newStatus: VehicleStatus) => {
+    if (!user) return;
+    try {
+      const veh = vehicles.find((v) => v.id === vehicleId);
+      if (!veh) return;
+      db.updateVehicle(user, vehicleId, { status: newStatus });
+      toast.push('success', `Status of ${veh.name} changed to ${newStatus}.`);
+    } catch (err) {
+      if (err instanceof RuleViolation) {
+        toast.push('error', err.message);
+      } else {
+        toast.push('error', 'Failed to update status.');
+      }
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -141,7 +154,6 @@ export default function Fleet() {
 
     try {
       if (editingVehicle) {
-        // Enforce basic state transitions or warning if updating status
         db.updateVehicle(user, editingVehicle.id, {
           reg_no: regNo.toUpperCase(),
           name,
@@ -152,7 +164,7 @@ export default function Fleet() {
           region,
           current_location: currentLocation,
           insurance_expiry: new Date(insuranceExpiry).toISOString(),
-          status, // Admin overrides allowed but logs in feed
+          status,
         });
         toast.push('success', `Vehicle ${name} updated successfully.`);
       } else {
@@ -179,8 +191,48 @@ export default function Fleet() {
     }
   };
 
+  const getBadgeCls = (status: string) => {
+    switch (status) {
+      case 'Available': return 'bg-emerald-500 text-white dark:bg-emerald-600';
+      case 'On Trip':   return 'bg-blue-500 text-white dark:bg-blue-600';
+      case 'In Shop':   return 'bg-amber-500 text-white dark:bg-amber-600';
+      case 'Retired':   return 'bg-red-500 text-white dark:bg-red-600';
+      default:          return 'bg-slate-400 text-white';
+    }
+  };
+
+  const getStatusBadge = (veh: Vehicle) => {
+    if (!isEditable) {
+      return (
+        <span className={`inline-flex items-center rounded-full px-3.5 py-1 text-xs font-bold uppercase tracking-wider ${getBadgeCls(veh.status)}`}>
+          {veh.status}
+        </span>
+      );
+    }
+
+    return (
+      <div className="relative inline-block w-36">
+        <select
+          value={veh.status}
+          onChange={(e) => handleStatusChange(veh.id, e.target.value as VehicleStatus)}
+          className={`w-full appearance-none rounded-full px-4 py-1.5 pr-8 text-xs font-bold uppercase tracking-wider cursor-pointer border border-transparent shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 transition-all ${getBadgeCls(veh.status)}`}
+        >
+          <option value="Available">Available</option>
+          <option value="On Trip">On Trip</option>
+          <option value="In Shop">In Shop</option>
+          <option value="Retired">Retired</option>
+        </select>
+        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-white">
+          <svg className="h-3 w-3 fill-current" viewBox="0 0 20 20">
+            <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+          </svg>
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-rise-in">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -201,16 +253,25 @@ export default function Fleet() {
       </div>
 
       {/* Filter and Search Panel */}
-      <div className="grid gap-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] p-4 sm:grid-cols-3">
-        <Field label="Search Registration No">
-          <Input
-            placeholder="e.g. GJ01AB4521..."
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 border-b border-[var(--color-border)] pb-6">
+        <div className="w-full xl:max-w-xs shrink-0 relative">
+          <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-[var(--color-text-faint)]">
+            <Search size={14} />
+          </span>
+          <input
+            type="text"
+            placeholder="Search by Registration No..."
             value={searchReg}
             onChange={(e) => setSearchReg(e.target.value)}
+            className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)] pl-9 pr-4 py-2.5 text-xs text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:border-orange-500 focus:outline-none focus:ring-4 focus:ring-orange-500/10 transition-all duration-200 shadow-sm"
           />
-        </Field>
+        </div>
 
-        <Field label="Filter by Type">
+        <div className="flex flex-nowrap items-center gap-3 overflow-x-auto hide-scrollbar w-full xl:w-auto pb-2 xl:pb-0">
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-faint)] shrink-0 px-2 flex items-center gap-1.5">
+            <SlidersHorizontal size={12} />
+            Filters
+          </span>
           <CustomSelect
             value={typeFilter}
             onChange={(val) => setTypeFilter(val)}
@@ -220,10 +281,8 @@ export default function Fleet() {
               { value: 'Truck', label: 'Truck' },
               { value: 'Mini', label: 'Mini' }
             ]}
+            className="w-40 shrink-0"
           />
-        </Field>
-
-        <Field label="Filter by Status">
           <CustomSelect
             value={statusFilter}
             onChange={(val) => setStatusFilter(val)}
@@ -234,28 +293,31 @@ export default function Fleet() {
               { value: 'In Shop', label: 'In Shop' },
               { value: 'Retired', label: 'Retired' }
             ]}
+            className="w-40 shrink-0"
           />
-        </Field>
+        </div>
       </div>
 
       {/* Table Card */}
-      <Card className="overflow-hidden border-[var(--color-border)] bg-[var(--color-panel)]">
+      <Card className="overflow-hidden border-[var(--color-border)] bg-[var(--color-panel)] hover:shadow-xl transition-shadow duration-300">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+          <table className="w-full text-left text-sm">
             <thead>
-              <tr className="border-b border-[var(--color-border)] text-[var(--color-text-faint)] font-semibold tracking-tight text-[11px] bg-[var(--color-panel-2)]">
-                <SortHeader field="reg_no" activeField={sortKey} onToggle={toggleSort}>Reg No</SortHeader>
-                <SortHeader field="name" activeField={sortKey} onToggle={toggleSort}>Model / Name</SortHeader>
-                <th className="px-4 py-3 font-semibold">Type</th>
-                <SortHeader field="max_capacity_kg" activeField={sortKey} onToggle={toggleSort}>Capacity</SortHeader>
-                <SortHeader field="odometer_km" activeField={sortKey} onToggle={toggleSort}>Odometer</SortHeader>
-                <SortHeader field="acquisition_cost" activeField={sortKey} onToggle={toggleSort}>Cost</SortHeader>
-                <th className="px-4 py-3 font-semibold">Depot / Region</th>
-                <th className="px-4 py-3 font-semibold">Current Location</th>
-                <th className="px-4 py-3 font-semibold">Insurance Expiry</th>
-                <th className="px-4 py-3 font-semibold">Status</th>
-                <th className="px-4 py-3 font-semibold">Alerts</th>
-                {isEditable && <th className="px-4 py-3 font-semibold text-right">Actions</th>}
+              <tr className="border-b border-[var(--color-border)] text-[var(--color-text-faint)] font-bold tracking-wider text-[10px] uppercase bg-[var(--color-panel-2)]/50">
+                <th className="px-6 py-4">
+                  <SortHeader field="name" activeField={sortKey} onToggle={toggleSort}>Vehicle Details</SortHeader>
+                </th>
+                <th className="px-6 py-4">
+                  <SortHeader field="max_capacity_kg" activeField={sortKey} onToggle={toggleSort}>Odometer & Capacity</SortHeader>
+                </th>
+                <th className="px-6 py-4">
+                  <SortHeader field="acquisition_cost" activeField={sortKey} onToggle={toggleSort}>Financials</SortHeader>
+                </th>
+                <th className="px-6 py-4 font-semibold">Depot & Location</th>
+                <th className="px-6 py-4 font-semibold">Insurance Expiry</th>
+                <th className="px-6 py-4 font-semibold">Status</th>
+                <th className="px-6 py-4 font-semibold">Alerts</th>
+                {isEditable && <th className="px-6 py-4 font-semibold text-right">Actions</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--color-border-soft)]">
@@ -265,32 +327,36 @@ export default function Fleet() {
                 const serviceDue = kmSinceService >= 10000 && veh.status !== 'Retired';
 
                 return (
-                  <tr key={veh.id} className="text-[var(--color-text-muted)] hover:text-[var(--color-text)]">
-                    <td className="px-4 py-3.5 font-mono text-[var(--color-text)] font-semibold">
-                      {veh.reg_no}
+                  <tr key={veh.id} className="text-[var(--color-text-muted)] hover:text-[var(--color-text)] transition-colors duration-150">
+                    <td className="px-6 py-4">
+                      <div className="font-semibold text-[var(--color-text)] text-sm">{veh.name}</div>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <span className="font-mono text-xs text-[var(--color-text-faint)] font-semibold">{veh.reg_no}</span>
+                        <span className="inline-flex rounded bg-[var(--color-panel-2)] px-1.5 py-0.5 text-[9px] font-bold border border-[var(--color-border)]">
+                          {veh.type}
+                        </span>
+                      </div>
                     </td>
-                    <td className="px-4 py-3.5 font-medium text-[var(--color-text)]">
-                      {veh.name}
+                    <td className="px-6 py-4">
+                      <div className="font-mono text-xs font-medium text-[var(--color-text)]">{fmtNumber(veh.odometer_km)} km</div>
+                      <div className="text-[10px] text-[var(--color-text-faint)] mt-0.5 font-semibold">Cap: {fmtNumber(veh.max_capacity_kg)} kg</div>
                     </td>
-                    <td className="px-4 py-3.5">{veh.type}</td>
-                    <td className="px-4 py-3.5 font-mono tabular-nums">
-                      {fmtNumber(veh.max_capacity_kg)} kg
-                    </td>
-                    <td className="px-4 py-3.5 font-mono tabular-nums">
-                      {fmtNumber(veh.odometer_km)} km
-                    </td>
-                    <td className="px-4 py-3.5 font-mono tabular-nums">
+                    <td className="px-6 py-4 font-mono text-xs">
                       {fmtCurrency(veh.acquisition_cost)}
                     </td>
-                    <td className="px-4 py-3.5">{veh.region || '—'}</td>
-                    <td className="px-4 py-3.5">{veh.current_location || '—'}</td>
-                    <td className="px-4 py-3.5 font-mono">{new Date(veh.insurance_expiry).toISOString().slice(0, 10)}</td>
-                    <td className="px-4 py-3.5">
-                      <StatusBadge status={veh.status} />
+                    <td className="px-6 py-4">
+                      <div className="text-xs text-[var(--color-text)] font-semibold">{veh.region || '—'}</div>
+                      <div className="text-[10px] text-[var(--color-text-faint)] mt-0.5">{veh.current_location || '—'}</div>
                     </td>
-                    <td className="px-4 py-3.5">
+                    <td className="px-6 py-4 font-mono text-xs">
+                      {new Date(veh.insurance_expiry).toISOString().slice(0, 10)}
+                    </td>
+                    <td className="px-6 py-4">
+                      {getStatusBadge(veh)}
+                    </td>
+                    <td className="px-6 py-4">
                       {serviceDue ? (
-                        <span className="inline-flex items-center gap-1 rounded bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-400 border border-amber-500/20">
+                        <span className="inline-flex items-center gap-1 rounded bg-amber-500/10 px-2 py-0.5 text-[9px] font-semibold text-amber-500 dark:text-amber-400 border border-amber-500/20">
                           <AlertTriangle size={10} />
                           Service Due
                         </span>
@@ -299,11 +365,12 @@ export default function Fleet() {
                       )}
                     </td>
                     {isEditable && (
-                      <td className="px-4 py-3.5 text-right">
+                      <td className="px-6 py-4 text-right">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => openEditModal(veh)}
+                          className="hover:bg-[var(--color-panel-2)]"
                         >
                           <Edit2 size={12} />
                           Edit
@@ -315,7 +382,7 @@ export default function Fleet() {
               })}
               {sortedVehicles.length === 0 && (
                 <tr>
-                  <td colSpan={12} className="px-4 py-8 text-center text-[var(--color-text-faint)]">
+                  <td colSpan={8} className="px-6 py-12 text-center text-[var(--color-text-faint)]">
                     No vehicles found. Register a vehicle or adjust your filters.
                   </td>
                 </tr>
@@ -330,119 +397,138 @@ export default function Fleet() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         title={editingVehicle ? `Edit Vehicle: ${editingVehicle.name}` : 'Register New Vehicle'}
+        width="max-w-md"
       >
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 p-2 animate-fade-in">
           {errorMsg && <Banner tone="error">{errorMsg}</Banner>}
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Registration Number" hint="Unique identifier (e.g. GJ01AB1234)">
-              <Input
-                required
-                value={regNo}
-                onChange={(e) => setRegNo(e.target.value)}
-                placeholder="GJ01AB1234"
-              />
-            </Field>
+          <div className="space-y-3.5">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Registration Number">
+                <Input
+                  required
+                  value={regNo}
+                  onChange={(e) => setRegNo(e.target.value)}
+                  placeholder="GJ01AB1234"
+                  className="py-2 text-xs"
+                />
+              </Field>
 
-            <Field label="Name / Model" hint="Vehicle label (e.g. TRUCK-12)">
-              <Input
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="TRUCK-12"
-              />
-            </Field>
-          </div>
+              <Field label="Name / Model">
+                <Input
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="TRUCK-12"
+                  className="py-2 text-xs"
+                />
+              </Field>
+            </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Vehicle Type">
-              <Select value={type} onChange={(e) => setType(e.target.value as VehicleType)}>
-                <option value="Van">Van</option>
-                <option value="Truck">Truck</option>
-                <option value="Mini">Mini</option>
-              </Select>
-            </Field>
-
-            <Field label="Max Capacity (kg)">
-              <Input
-                required
-                type="number"
-                min={1}
-                value={maxCapacity}
-                onChange={(e) => setMaxCapacity(Number(e.target.value))}
-              />
-            </Field>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Odometer (km)">
-              <Input
-                required
-                type="number"
-                min={0}
-                value={odometer}
-                onChange={(e) => setOdometer(Number(e.target.value))}
-              />
-            </Field>
-
-            <Field label="Acquisition Cost (₹)">
-              <Input
-                required
-                type="number"
-                min={1}
-                value={acqCost}
-                onChange={(e) => setAcqCost(Number(e.target.value))}
-              />
-            </Field>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Region Depot" hint="Depot location">
-              <Input
-                required
-                value={region}
-                onChange={(e) => setRegion(e.target.value)}
-                placeholder="Ahmedabad Depot"
-              />
-            </Field>
-
-            <Field label="Current Location" hint="Used for proximity matching">
-              <Input
-                required
-                value={currentLocation}
-                onChange={(e) => setCurrentLocation(e.target.value)}
-                placeholder="Ahmedabad Hub"
-              />
-            </Field>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Insurance Expiry">
-              <Input
-                required
-                type="date"
-                value={insuranceExpiry}
-                onChange={(e) => setInsuranceExpiry(e.target.value)}
-              />
-            </Field>
-
-            {editingVehicle && (
-              <Field label="Force Status override" hint="State machine status override">
-                <Select value={status} onChange={(e) => setStatus(e.target.value as VehicleStatus)}>
-                  <option value="Available">Available</option>
-                  <option value="On Trip">On Trip</option>
-                  <option value="In Shop">In Shop</option>
-                  <option value="Retired">Retired</option>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Vehicle Type">
+                <Select 
+                  value={type} 
+                  onChange={(e) => setType(e.target.value as VehicleType)}
+                  className="py-2 text-xs"
+                >
+                  <option value="Van">Van</option>
+                  <option value="Truck">Truck</option>
+                  <option value="Mini">Mini</option>
                 </Select>
               </Field>
-            )}
+
+              <Field label="Max Capacity (kg)">
+                <Input
+                  required
+                  type="number"
+                  min={1}
+                  value={maxCapacity}
+                  onChange={(e) => setMaxCapacity(Number(e.target.value))}
+                  className="py-2 text-xs"
+                />
+              </Field>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Odometer (km)">
+                <Input
+                  required
+                  type="number"
+                  min={0}
+                  value={odometer}
+                  onChange={(e) => setOdometer(Number(e.target.value))}
+                  className="py-2 text-xs"
+                />
+              </Field>
+
+              <Field label="Acquisition Cost (₹)">
+                <Input
+                  required
+                  type="number"
+                  min={1}
+                  value={acqCost}
+                  onChange={(e) => setAcqCost(Number(e.target.value))}
+                  className="py-2 text-xs"
+                />
+              </Field>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Region Depot">
+                <Input
+                  required
+                  value={region}
+                  onChange={(e) => setRegion(e.target.value)}
+                  placeholder="Ahmedabad Depot"
+                  className="py-2 text-xs"
+                />
+              </Field>
+
+              <Field label="Current Location">
+                <Input
+                  required
+                  value={currentLocation}
+                  onChange={(e) => setCurrentLocation(e.target.value)}
+                  placeholder="Ahmedabad Hub"
+                  className="py-2 text-xs"
+                />
+              </Field>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Insurance Expiry">
+                <Input
+                  required
+                  type="date"
+                  value={insuranceExpiry}
+                  onChange={(e) => setInsuranceExpiry(e.target.value)}
+                  className="py-2 text-xs"
+                />
+              </Field>
+
+              {editingVehicle && (
+                <Field label="Force Status override">
+                  <Select 
+                    value={status} 
+                    onChange={(e) => setStatus(e.target.value as VehicleStatus)}
+                    className="py-2 text-xs"
+                  >
+                    <option value="Available">Available</option>
+                    <option value="On Trip">On Trip</option>
+                    <option value="In Shop">In Shop</option>
+                    <option value="Retired">Retired</option>
+                  </Select>
+                </Field>
+              )}
+            </div>
           </div>
 
-          <div className="flex justify-end gap-2 pt-4 border-t border-[var(--color-border)]">
-            <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>
+          <div className="flex justify-end gap-2 pt-4 border-t border-[var(--color-border)] mt-6">
+            <Button type="button" variant="secondary" onClick={() => setModalOpen(false)} className="text-xs">
               Cancel
             </Button>
-            <Button type="submit">
+            <Button type="submit" className="text-xs">
               {editingVehicle ? 'Save Changes' : 'Register Vehicle'}
             </Button>
           </div>
