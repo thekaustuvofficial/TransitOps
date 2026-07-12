@@ -1,5 +1,19 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import pg from 'pg';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const { Pool } = pg;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const DB_FILE = path.join(__dirname, 'db', 'db.json');
+
+function readDb() {
+  return JSON.parse(fs.readFileSync(DB_FILE, 'utf-8'));
+}
 
 const app = express();
 app.use(cors());
