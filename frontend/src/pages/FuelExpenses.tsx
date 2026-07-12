@@ -80,14 +80,12 @@ export default function FuelExpenses() {
   const vehicleCostBreakdown = vehicles.map((v) => {
     const fuelCost = fuelLogs.filter((f) => f.vehicle_id === v.id).reduce((sum, f) => sum + f.cost, 0);
     const maintCost = maintenance.filter((m) => m.vehicle_id === v.id).reduce((sum, m) => sum + m.cost, 0);
-    const tripExp = expenses.filter((e) => e.vehicle_id === v.id).reduce((sum, e) => sum + e.toll + e.other, 0);
-    const total = fuelCost + maintCost + tripExp;
+    const total = fuelCost + maintCost;
 
     return {
       vehicle: v,
       fuelCost,
       maintCost,
-      tripExp,
       total,
     };
   });
@@ -158,7 +156,7 @@ export default function FuelExpenses() {
         <Card className="overflow-hidden border-[var(--color-border)] bg-[var(--color-panel)]">
           <div className="p-4 border-b border-[var(--color-border)] bg-[var(--color-panel-2)]">
             <h3 className="font-display text-xs font-semibold text-[var(--color-text)]">
-              Operational Cost Formula: Fuel + Maintenance + Tolls & Other
+              Operational Cost Formula: Fuel + Maintenance
             </h3>
           </div>
           <div className="overflow-x-auto">
@@ -170,19 +168,17 @@ export default function FuelExpenses() {
                   <th className="px-4 py-3 font-semibold">Type</th>
                   <th className="px-4 py-3 font-semibold">Fuel Cost</th>
                   <th className="px-4 py-3 font-semibold">Maintenance Cost</th>
-                  <th className="px-4 py-3 font-semibold">Tolls & Other</th>
                   <th className="px-4 py-3 font-semibold">Total Op. Cost</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--color-border-soft)]">
-                {vehicleCostBreakdown.map(({ vehicle, fuelCost, maintCost, tripExp, total }) => (
+                {vehicleCostBreakdown.map(({ vehicle, fuelCost, maintCost, total }) => (
                   <tr key={vehicle.id} className="text-[var(--color-text-muted)] hover:text-[var(--color-text)]">
                     <td className="px-4 py-3.5 font-medium text-[var(--color-text)]">{vehicle.name}</td>
                     <td className="px-4 py-3.5 font-mono font-semibold">{vehicle.reg_no}</td>
                     <td className="px-4 py-3.5">{vehicle.type}</td>
                     <td className="px-4 py-3.5 font-mono">{fmtCurrency(fuelCost)}</td>
                     <td className="px-4 py-3.5 font-mono">{fmtCurrency(maintCost)}</td>
-                    <td className="px-4 py-3.5 font-mono">{fmtCurrency(tripExp)}</td>
                     <td className="px-4 py-3.5 font-mono font-bold text-[var(--color-text)]">
                       {fmtCurrency(total)}
                     </td>

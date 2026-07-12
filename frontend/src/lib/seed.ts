@@ -14,20 +14,20 @@ export const SEED_USERS: User[] = [
 const v1 = uid('veh'), v2 = uid('veh'), v3 = uid('veh'), v4 = uid('veh'), v5 = uid('veh');
 
 export const SEED_VEHICLES: Vehicle[] = [
-  { id: v1, reg_no: 'GJ01AB4521', name: 'VAN-05', type: 'Van', max_capacity_kg: 500, odometer_km: 74000, acquisition_cost: 620000, status: 'Available', last_service_odometer_km: 70000, region: 'Ahmedabad' },
-  { id: v2, reg_no: 'GJ01AB9987', name: 'TRUCK-11', type: 'Truck', max_capacity_kg: 5000, odometer_km: 182000, acquisition_cost: 2450000, status: 'On Trip', last_service_odometer_km: 175000, region: 'Ahmedabad' },
-  { id: v3, reg_no: 'GJ01AB1120', name: 'MINI-03', type: 'Mini', max_capacity_kg: 1000, odometer_km: 66000, acquisition_cost: 410000, status: 'In Shop', last_service_odometer_km: 60000, region: 'Gandhinagar' },
-  { id: v4, reg_no: 'GJ01AB0087', name: 'VAN-09', type: 'Van', max_capacity_kg: 750, odometer_km: 241900, acquisition_cost: 590000, status: 'Retired', last_service_odometer_km: 240000, region: 'Vatva' },
-  { id: v5, reg_no: 'GJ01AB2244', name: 'TRUCK-04', type: 'Truck', max_capacity_kg: 4500, odometer_km: 98000, acquisition_cost: 2100000, status: 'Available', last_service_odometer_km: 90000, region: 'Sanand' },
+  { id: v1, reg_no: 'GJ01AB4521', name: 'VAN-05', type: 'Van', max_capacity_kg: 500, odometer_km: 74000, acquisition_cost: 620000, insurance_expiry: daysFromNow(420), status: 'Available', last_service_odometer_km: 70000, region: 'Ahmedabad', current_location: 'Ahmedabad Depot' },
+  { id: v2, reg_no: 'GJ01AB9987', name: 'TRUCK-11', type: 'Truck', max_capacity_kg: 5000, odometer_km: 182000, acquisition_cost: 2450000, insurance_expiry: daysFromNow(180), status: 'On Trip', last_service_odometer_km: 175000, region: 'Ahmedabad', current_location: 'Ahmedabad Hub' },
+  { id: v3, reg_no: 'GJ01AB1120', name: 'MINI-03', type: 'Mini', max_capacity_kg: 1000, odometer_km: 66000, acquisition_cost: 410000, insurance_expiry: daysFromNow(60), status: 'In Shop', last_service_odometer_km: 60000, region: 'Gandhinagar', current_location: 'Gandhinagar Workshop' },
+  { id: v4, reg_no: 'GJ01AB0087', name: 'VAN-09', type: 'Van', max_capacity_kg: 750, odometer_km: 241900, acquisition_cost: 590000, insurance_expiry: daysFromNow(-15), status: 'Retired', last_service_odometer_km: 240000, region: 'Vatva', current_location: 'Vatva Yard' },
+  { id: v5, reg_no: 'GJ01AB2244', name: 'TRUCK-04', type: 'Truck', max_capacity_kg: 4500, odometer_km: 98000, acquisition_cost: 2100000, insurance_expiry: daysFromNow(250), status: 'Available', last_service_odometer_km: 90000, region: 'Sanand', current_location: 'Sanand Warehouse' },
 ];
 
 const d1 = uid('drv'), d2 = uid('drv'), d3 = uid('drv'), d4 = uid('drv');
 
 export const SEED_DRIVERS: Driver[] = [
-  { id: d1, name: 'Alex Fernandes', license_no: 'DL-88213', license_category: 'LMV', license_expiry: daysFromNow(540), contact: '98765xxxxx', safety_score: 96, status: 'Available' },
-  { id: d2, name: 'John Mathew', license_no: 'DL-44120', license_category: 'HMV', license_expiry: daysFromNow(-90), contact: '98220xxxxx', safety_score: 81, status: 'Suspended' },
-  { id: d3, name: 'Priya Patel', license_no: 'DL-77031', license_category: 'LMV', license_expiry: daysFromNow(30), contact: '99110xxxxx', safety_score: 99, status: 'On Trip' },
-  { id: d4, name: 'Suresh Kumar', license_no: 'DL-90045', license_category: 'HMV', license_expiry: daysFromNow(200), contact: '97440xxxxx', safety_score: 88, status: 'Available' },
+  { id: d1, name: 'Alex Fernandes', license_no: 'DL-88213', license_category: 'LMV', license_expiry: daysFromNow(540), contact: '98765xxxxx', safety_score: 96, status: 'Available', current_location: 'Ahmedabad Hub' },
+  { id: d2, name: 'John Mathew', license_no: 'DL-44120', license_category: 'HMV', license_expiry: daysFromNow(-90), contact: '98220xxxxx', safety_score: 81, status: 'Suspended', current_location: 'Home Base' },
+  { id: d3, name: 'Priya Patel', license_no: 'DL-77031', license_category: 'LMV', license_expiry: daysFromNow(30), contact: '99110xxxxx', safety_score: 99, status: 'On Trip', current_location: 'Gandhinagar Depot' },
+  { id: d4, name: 'Suresh Kumar', license_no: 'DL-90045', license_category: 'HMV', license_expiry: daysFromNow(200), contact: '97440xxxxx', safety_score: 88, status: 'Available', current_location: 'Sanand Warehouse' },
 ];
 
 const t1 = uid('trp');

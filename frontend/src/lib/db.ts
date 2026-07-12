@@ -1,5 +1,5 @@
 import type {
-  Vehicle, Driver, Trip, MaintenanceLog, FuelLog, Expense, ActivityEntry, User, Role,
+  Vehicle, Driver, Trip, MaintenanceLog, FuelLog, Expense, ActivityEntry, User,
 } from '../types';
 import { uid } from './id';
 import {
@@ -61,7 +61,7 @@ type Listener = () => void;
 
 class Database {
   private snap: Snapshot = loadSnapshot();
-  private listeners = new Set<Listener>();
+  private readonly listeners = new Set<Listener>();
 
   public useBackend = false;
 
@@ -149,8 +149,7 @@ class Database {
   operationalCost(vehicleId: string): number {
     const fuel = this.snap.fuel.filter((f) => f.vehicle_id === vehicleId).reduce((s, f) => s + f.cost, 0);
     const maint = this.snap.maintenance.filter((m) => m.vehicle_id === vehicleId).reduce((s, m) => s + m.cost, 0);
-    const tolls = this.snap.expenses.filter((e) => e.vehicle_id === vehicleId).reduce((s, e) => s + e.toll + e.other, 0);
-    return fuel + maint + tolls;
+    return fuel + maint;
   }
 
   vehicleRevenue(vehicleId: string): number {
@@ -360,4 +359,3 @@ class Database {
 }
 
 export const db = new Database();
-export type { Role };

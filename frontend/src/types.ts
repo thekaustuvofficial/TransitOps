@@ -19,9 +19,11 @@ export interface Vehicle {
   max_capacity_kg: number;
   odometer_km: number;
   acquisition_cost: number;
+  insurance_expiry: string;
   status: VehicleStatus;
   last_service_odometer_km: number;
   region: string;
+  current_location: string;
 }
 
 export type LicenseCategory = 'LMV' | 'HMV';
@@ -36,6 +38,7 @@ export interface Driver {
   contact: string;
   safety_score: number; // 0-100
   status: DriverStatus;
+  current_location: string;
 }
 
 export type TripStatus = 'Draft' | 'Dispatched' | 'Completed' | 'Cancelled';
