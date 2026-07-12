@@ -77,7 +77,7 @@ function AppContent() {
       const hash = window.location.hash.replace('#/', '') as string;
       if (hash === 'dashboard') {
         setShowDashboard(true);
-      } else if (['fleet', 'drivers', 'trips', 'fuel_exp', 'analytics', 'maintenance', 'settings'].includes(hash)) {
+      } else if (['fleet', 'drivers', 'trips', 'fuel_exp', 'analytics', 'maintenance', 'settings', 'driver_portal'].includes(hash)) {
         setShowDashboard(false);
         setCurrentModule(hash as Module);
       } else {

@@ -35,106 +35,99 @@ export function getDispatchRecommendations(
   // ==========================================
 
   const eligibleVehicles = vehicles.filter(truck => {
-    // 1. Status Check
     if (truck.status !== 'Available') return false;
-
-    // 2. Service Needed Check (If driven > 10,000km since last service)
     const kmSinceLastService = truck.odometer_km - truck.last_service_odometer_km;
     if (kmSinceLastService >= SERVICE_INTERVAL_KM) return false;
-
-    // 3. Insurance Check
     if (new Date(truck.insurance_expiry) < currentDate) return false;
-
-    // (Phase C pre-requisite) Capacity Matching
     if (truck.max_capacity_kg < order.cargoWeightKg) return false;
-
     return true;
   });
 
   const eligibleDrivers = drivers.filter(driver => {
-    // 1. Status Check
     if (driver.status !== 'Available') return false;
-
-    // 2. License Expiry Check
     if (new Date(driver.license_expiry) < currentDate) return false;
-
-    // 3. Legal Hours Check
     const hoursWorked = driverHoursWorkedToday[driver.id] || 0;
     if (hoursWorked + order.estimatedDurationHours > LEGAL_DAILY_LIMIT_HOURS) return false;
-
     return true;
   });
 
-  // ==========================================
-  // PHASE C: The Smart Matchmaker
-  // ==========================================
-  const matches: MatchResult[] = [];
+  const calculateMatches = (vList: Vehicle[], dList: Driver[], isRelaxed = false): MatchResult[] => {
+    const list: MatchResult[] = [];
+    for (const truck of vList) {
+      for (const driver of dList) {
+        const needsHMV = truck.type === 'Truck';
+        if (needsHMV && driver.license_category !== 'HMV') continue;
 
-  for (const truck of eligibleVehicles) {
-    for (const driver of eligibleDrivers) {
-      // License Category compatibility Check
-      // Trucks generally require HMV, while Vans/Minis can be driven on LMV
-      const needsHMV = truck.type === 'Truck';
-      if (needsHMV && driver.license_category !== 'HMV') continue;
-      
-      const reasons: string[] = [];
-      let score = 0;
+        const reasons: string[] = [];
+        let score = 0;
 
-      // 1. Proximity Matching (Scoring System: Lower is better)
-      if (truck.current_location === order.source) {
-        score -= 50; 
-        reasons.push('Truck already at source');
-      } else {
-        score += 100; // Penalty for deadhead truck routing
+        if (isRelaxed) {
+          reasons.push('Bypassed strict service/insurance limits');
+        }
+
+        if (truck.current_location === order.source) {
+          score -= 50; 
+          reasons.push('Truck already at source');
+        } else {
+          score += 100;
+        }
+
+        if (driver.current_location === order.source) {
+          score -= 50;
+          reasons.push('Driver already at source');
+        } else if (driver.current_location === truck.current_location) {
+          score -= 20; 
+          reasons.push('Driver at truck location');
+        } else {
+          score += 100;
+        }
+
+        const truckCostPerKm = truck.acquisition_cost / 1000000; 
+        const driverCostPerHour = driver.license_category === 'HMV' ? 200 : 150;
+        const estimatedCost = (truckCostPerKm * order.plannedDistanceKm) + (driverCostPerHour * order.estimatedDurationHours);
+        
+        score += estimatedCost;
+        reasons.push(`Estimated optimal cost: ₹${estimatedCost.toFixed(2)}`);
+
+        const wastedCapacity = truck.max_capacity_kg - order.cargoWeightKg;
+        if (wastedCapacity > 1000) {
+           score += (wastedCapacity / 100); 
+           reasons.push('Warning: Large unused capacity');
+        } else {
+           reasons.push('Optimal capacity match');
+        }
+
+        list.push({
+          driver,
+          vehicle: truck,
+          score,
+          costEstimate: estimatedCost,
+          reasons
+        });
       }
-
-      if (driver.current_location === order.source) {
-        score -= 50;
-        reasons.push('Driver already at source');
-      } else if (driver.current_location === truck.current_location) {
-        score -= 20; 
-        reasons.push('Driver at truck location');
-      } else {
-        score += 100;
-      }
-
-      // 2. Cost Optimization
-      // Base calculation on abstract rates for ranking purposes
-      const truckCostPerKm = truck.acquisition_cost / 1000000; 
-      const driverCostPerHour = driver.license_category === 'HMV' ? 200 : 150;
-      
-      const estimatedCost = (truckCostPerKm * order.plannedDistanceKm) + (driverCostPerHour * order.estimatedDurationHours);
-      
-      score += estimatedCost;
-      reasons.push(`Estimated optimal cost: ₹${estimatedCost.toFixed(2)}`);
-
-      // 3. Capacity Efficiency 
-      // Calculate how much space we are wasting if we use a big truck for a small load
-      const wastedCapacity = truck.max_capacity_kg - order.cargoWeightKg;
-      if (wastedCapacity > 1000) {
-         score += (wastedCapacity / 100); 
-         reasons.push('Warning: Large unused capacity');
-      } else {
-         reasons.push('Optimal capacity match');
-      }
-
-      matches.push({
-        driver,
-        vehicle: truck,
-        score,
-        costEstimate: estimatedCost,
-        reasons
-      });
     }
+    return list;
+  };
+
+  let matches = calculateMatches(eligibleVehicles, eligibleDrivers, false);
+
+  // Fallback: If no matches under strict criteria, run relaxed matching (matching manual selector filters)
+  if (matches.length === 0) {
+    const relaxedVehicles = vehicles.filter(truck => {
+      if (truck.status !== 'Available') return false;
+      if (truck.max_capacity_kg < order.cargoWeightKg) return false;
+      return true;
+    });
+
+    const relaxedDrivers = drivers.filter(driver => {
+      if (driver.status !== 'Available') return false;
+      if (new Date(driver.license_expiry) < currentDate) return false;
+      return true;
+    });
+
+    matches = calculateMatches(relaxedVehicles, relaxedDrivers, true);
   }
 
-  // ==========================================
-  // PHASE D: The Final Output
-  // ==========================================
-  
-  // Sort combinations by score (lowest score = highest efficiency)
   matches.sort((a, b) => a.score - b.score);
-  
-  // Return the top 3 best Driver + Truck combinations
   return matches.slice(0, 3);
 }
