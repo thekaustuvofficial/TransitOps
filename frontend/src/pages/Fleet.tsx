@@ -1,12 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useDb } from '../hooks/useDb';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { canEdit } from '../lib/permissions';
 import { StatusBadge } from '../components/StatusBadge';
-import { Button, Card, Input, Select, Field, Modal, Banner } from '../components/primitives';
+import { Button, Card, Input, Select, Field, Modal, Banner, CustomSelect } from '../components/primitives';
 import { fmtCurrency, fmtNumber } from '../lib/format';
-import { Plus, Edit2, AlertTriangle } from 'lucide-react';
+import { Plus, Edit2, AlertTriangle, ArrowUpDown } from 'lucide-react';
 import type { Vehicle, VehicleType, VehicleStatus } from '../types';
 import { RuleViolation } from '../lib/db';
 
@@ -19,8 +19,14 @@ export default function Fleet() {
 
   // Filter States
   const [typeFilter, setTypeFilter] = useState<string>('All');
-  const [statusFilter, setStatusFilter] = useState<string>('All');
+  const [statusFilter, setStatusFilter] = useState<string>(() => {
+    return sessionStorage.getItem('fleet_status_filter') || 'All';
+  });
   const [searchReg, setSearchReg] = useState<string>('');
+
+  useEffect(() => {
+    sessionStorage.removeItem('fleet_status_filter');
+  }, []);
 
   // Modal States
   const [modalOpen, setModalOpen] = useState(false);
@@ -37,6 +43,10 @@ export default function Fleet() {
   const [region, setRegion] = useState('');
   const [status, setStatus] = useState<VehicleStatus>('Available');
 
+  // Sort State
+  const [sortKey, setSortKey] = useState<keyof Vehicle | null>(null);
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+
   const vehicles = db.vehicles;
 
   // Filter Logic
@@ -46,6 +56,40 @@ export default function Fleet() {
     if (searchReg.trim() !== '' && !v.reg_no.toLowerCase().includes(searchReg.toLowerCase())) return false;
     return true;
   });
+
+  // Sort Logic
+  const sortedVehicles = [...filteredVehicles].sort((a, b) => {
+    if (!sortKey) return 0;
+    const av = a[sortKey];
+    const bv = b[sortKey];
+    if (typeof av === 'number' && typeof bv === 'number') {
+      return sortDir === 'asc' ? av - bv : bv - av;
+    }
+    return sortDir === 'asc'
+      ? String(av).localeCompare(String(bv))
+      : String(bv).localeCompare(String(av));
+  });
+
+  const toggleSort = (key: keyof Vehicle) => {
+    if (sortKey === key) {
+      setSortDir((d) => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  };
+
+  const SortHeader = ({ field, children }: { field: keyof Vehicle; children: React.ReactNode }) => (
+    <th
+      className="px-4 py-3 font-medium cursor-pointer select-none hover:text-[var(--color-text)] transition-colors"
+      onClick={() => toggleSort(field)}
+    >
+      <span className="inline-flex items-center gap-1">
+        {children}
+        <ArrowUpDown size={10} className={sortKey === field ? 'text-amber-500' : 'opacity-30'} />
+      </span>
+    </th>
+  );
 
   const openAddModal = () => {
     setEditingVehicle(null);
@@ -138,7 +182,7 @@ export default function Fleet() {
       </div>
 
       {/* Filter and Search Panel */}
-      <div className="grid gap-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)] p-4 sm:grid-cols-3">
+      <div className="grid gap-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] p-4 sm:grid-cols-3">
         <Field label="Search Registration No">
           <Input
             placeholder="e.g. GJ01AB4521..."
@@ -148,22 +192,30 @@ export default function Fleet() {
         </Field>
 
         <Field label="Filter by Type">
-          <Select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
-            <option value="All">All Types</option>
-            <option value="Van">Van</option>
-            <option value="Truck">Truck</option>
-            <option value="Mini">Mini</option>
-          </Select>
+          <CustomSelect
+            value={typeFilter}
+            onChange={(val) => setTypeFilter(val)}
+            options={[
+              { value: 'All', label: 'All Types' },
+              { value: 'Van', label: 'Van' },
+              { value: 'Truck', label: 'Truck' },
+              { value: 'Mini', label: 'Mini' }
+            ]}
+          />
         </Field>
 
         <Field label="Filter by Status">
-          <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-            <option value="All">All Statuses</option>
-            <option value="Available">Available</option>
-            <option value="On Trip">On Trip</option>
-            <option value="In Shop">In Shop</option>
-            <option value="Retired">Retired</option>
-          </Select>
+          <CustomSelect
+            value={statusFilter}
+            onChange={(val) => setStatusFilter(val)}
+            options={[
+              { value: 'All', label: 'All Statuses' },
+              { value: 'Available', label: 'Available' },
+              { value: 'On Trip', label: 'On Trip' },
+              { value: 'In Shop', label: 'In Shop' },
+              { value: 'Retired', label: 'Retired' }
+            ]}
+          />
         </Field>
       </div>
 
@@ -172,41 +224,41 @@ export default function Fleet() {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-[var(--color-border)] text-[var(--color-text-muted)]">
-                <th className="px-4 py-3 font-medium">REG NO. (UNIQUE)</th>
-                <th className="px-4 py-3 font-medium">NAME / MODEL</th>
-                <th className="px-4 py-3 font-medium">TYPE</th>
-                <th className="px-4 py-3 font-medium">MAX CAPACITY</th>
-                <th className="px-4 py-3 font-medium">ODOMETER</th>
-                <th className="px-4 py-3 font-medium">ACQUISITION COST</th>
-                <th className="px-4 py-3 font-medium">REGION</th>
-                <th className="px-4 py-3 font-medium">STATUS</th>
-                <th className="px-4 py-3 font-medium">NOTICES</th>
-                {isEditable && <th className="px-4 py-3 font-medium text-right">ACTIONS</th>}
+              <tr className="border-b border-[var(--color-border)] text-[var(--color-text-faint)] font-semibold tracking-tight text-[11px] bg-[var(--color-panel-2)]">
+                <SortHeader field="reg_no">Reg No</SortHeader>
+                <SortHeader field="name">Model / Name</SortHeader>
+                <th className="px-4 py-3 font-semibold">Type</th>
+                <SortHeader field="max_capacity_kg">Capacity</SortHeader>
+                <SortHeader field="odometer_km">Odometer</SortHeader>
+                <SortHeader field="acquisition_cost">Cost</SortHeader>
+                <th className="px-4 py-3 font-semibold">Depot / Region</th>
+                <th className="px-4 py-3 font-semibold">Status</th>
+                <th className="px-4 py-3 font-semibold">Alerts</th>
+                {isEditable && <th className="px-4 py-3 font-semibold text-right">Actions</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--color-border-soft)]">
-              {filteredVehicles.map((veh) => {
+              {sortedVehicles.map((veh) => {
                 // Compute maintenance nudge (e.g. 10,000 km since last service)
                 const kmSinceService = veh.odometer_km - veh.last_service_odometer_km;
                 const serviceDue = kmSinceService >= 10000 && veh.status !== 'Retired';
 
                 return (
                   <tr key={veh.id} className="text-[var(--color-text-muted)] hover:text-[var(--color-text)]">
-                    <td className="px-4 py-3.5 font-display font-semibold text-[var(--color-text)]">
+                    <td className="px-4 py-3.5 font-mono text-[var(--color-text)] font-semibold">
                       {veh.reg_no}
                     </td>
                     <td className="px-4 py-3.5 font-medium text-[var(--color-text)]">
                       {veh.name}
                     </td>
                     <td className="px-4 py-3.5">{veh.type}</td>
-                    <td className="px-4 py-3.5 font-display">
+                    <td className="px-4 py-3.5 font-mono tabular-nums">
                       {fmtNumber(veh.max_capacity_kg)} kg
                     </td>
-                    <td className="px-4 py-3.5 font-display">
+                    <td className="px-4 py-3.5 font-mono tabular-nums">
                       {fmtNumber(veh.odometer_km)} km
                     </td>
-                    <td className="px-4 py-3.5 font-display">
+                    <td className="px-4 py-3.5 font-mono tabular-nums">
                       {fmtCurrency(veh.acquisition_cost)}
                     </td>
                     <td className="px-4 py-3.5">{veh.region || '—'}</td>
@@ -238,7 +290,7 @@ export default function Fleet() {
                   </tr>
                 );
               })}
-              {filteredVehicles.length === 0 && (
+              {sortedVehicles.length === 0 && (
                 <tr>
                   <td colSpan={10} className="px-4 py-8 text-center text-[var(--color-text-faint)]">
                     No vehicles found. Register a vehicle or adjust your filters.

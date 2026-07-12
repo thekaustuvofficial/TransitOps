@@ -95,14 +95,14 @@ export default function Maintenance() {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-[var(--color-border)] text-[var(--color-text-muted)]">
-                <th className="px-4 py-3 font-medium">VEHICLE</th>
-                <th className="px-4 py-3 font-medium">REG NO.</th>
-                <th className="px-4 py-3 font-medium">SERVICE TYPE</th>
-                <th className="px-4 py-3 font-medium">DATE</th>
-                <th className="px-4 py-3 font-medium font-display">COST</th>
-                <th className="px-4 py-3 font-medium">STATUS</th>
-                {isEditable && <th className="px-4 py-3 font-medium text-right">ACTIONS</th>}
+              <tr className="border-b border-[var(--color-border)] text-[var(--color-text-faint)] font-semibold tracking-tight text-[11px] bg-[var(--color-panel-2)]">
+                <th className="px-4 py-3 font-semibold">Vehicle</th>
+                <th className="px-4 py-3 font-semibold">Reg No</th>
+                <th className="px-4 py-3 font-semibold">Service Type</th>
+                <th className="px-4 py-3 font-semibold">Date</th>
+                <th className="px-4 py-3 font-semibold">Cost</th>
+                <th className="px-4 py-3 font-semibold">Status</th>
+                {isEditable && <th className="px-4 py-3 font-semibold text-right">Actions</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--color-border-soft)]">
@@ -114,16 +114,16 @@ export default function Maintenance() {
                     <td className="px-4 py-3.5 font-medium text-[var(--color-text)]">
                       {vehicle?.name ?? <span className="text-[var(--color-text-faint)]">Unknown Vehicle</span>}
                     </td>
-                    <td className="px-4 py-3.5 font-display text-[var(--color-text-faint)]">
+                    <td className="px-4 py-3.5 font-mono text-[var(--color-text-faint)]">
                       {vehicle?.reg_no ?? '—'}
                     </td>
                     <td className="px-4 py-3.5 font-semibold text-[var(--color-text)]">
                       {log.service_type}
                     </td>
-                    <td className="px-4 py-3.5 font-display">
+                    <td className="px-4 py-3.5 font-mono">
                       {fmtDate(log.date)}
                     </td>
-                    <td className="px-4 py-3.5 font-display text-[var(--color-text)]">
+                    <td className="px-4 py-3.5 font-mono text-[var(--color-text)]">
                       {fmtCurrency(log.cost)}
                     </td>
                     <td className="px-4 py-3.5">
@@ -169,9 +169,7 @@ export default function Maintenance() {
         <form onSubmit={handleSubmit} className="space-y-4">
           {errorMsg && <Banner tone="error">{errorMsg}</Banner>}
 
-          <Banner tone="info">
-            <strong>State Transition Note:</strong> Creating an active maintenance log will instantly lock this vehicle, setting its status to <em>In Shop</em> and removing it from the eligible trip dispatcher pool.
-          </Banner>
+            <strong>State Transition Note:</strong> Creating an active maintenance log will instantly lock this vehicle, setting its status to <em>In Shop</em> and removing it from the active dispatch pool.
 
           <Field label="Select Available Vehicle" hint="Only Available vehicles (not Retired or On Trip) are eligible for maintenance check-in">
             <Select

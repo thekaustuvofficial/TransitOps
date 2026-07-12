@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useDb } from '../hooks/useDb';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { canEdit } from '../lib/permissions';
 import { StatusBadge } from '../components/StatusBadge';
-import { Button, Card, Input, Select, Field, Modal, Banner } from '../components/primitives';
+import { Button, Card, Input, Select, Field, Modal, Banner, CustomSelect } from '../components/primitives';
 import { fmtDate, daysUntil } from '../lib/format';
 import { Plus, Edit2, AlertOctagon, ShieldAlert, Award } from 'lucide-react';
 import type { Driver, LicenseCategory, DriverStatus } from '../types';
@@ -18,8 +18,14 @@ export default function Drivers() {
   const isEditable = user ? canEdit(user.role, 'drivers') : false;
 
   // Filter States
-  const [statusFilter, setStatusFilter] = useState<string>('All');
+  const [statusFilter, setStatusFilter] = useState<string>(() => {
+    return sessionStorage.getItem('driver_status_filter') || 'All';
+  });
   const [searchQuery, setSearchQuery] = useState<string>('');
+
+  useEffect(() => {
+    sessionStorage.removeItem('driver_status_filter');
+  }, []);
 
   // Modal States
   const [modalOpen, setModalOpen] = useState(false);
@@ -132,8 +138,9 @@ export default function Drivers() {
     }
     if (daysLeft < 30) {
       return (
-        <span className="inline-flex items-center gap-1 rounded border border-red-500/30 bg-red-500/5 px-2 py-0.5 text-[10px] font-medium text-red-400">
-          ⚠️ EXPIRY CRITICAL ({daysLeft}d left)
+        <span className="inline-flex items-center gap-1 rounded border border-red-500/30 bg-red-500/5 px-2 py-0.5 text-[10px] font-semibold text-red-400">
+          <AlertOctagon size={10} />
+          EXPIRY CRITICAL ({daysLeft}d left)
         </span>
       );
     }
@@ -173,7 +180,7 @@ export default function Drivers() {
       </div>
 
       {/* Filter and Search Panel */}
-      <div className="grid gap-4 rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)] p-4 sm:grid-cols-2">
+      <div className="grid gap-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] p-4 sm:grid-cols-2">
         <Field label="Search by Name or License No.">
           <Input
             placeholder="e.g. Alex Fernandes or DL-88..."
@@ -183,13 +190,17 @@ export default function Drivers() {
         </Field>
 
         <Field label="Filter by Duty Status">
-          <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-            <option value="All">All Statuses</option>
-            <option value="Available">Available</option>
-            <option value="On Trip">On Trip</option>
-            <option value="Off Duty">Off Duty</option>
-            <option value="Suspended">Suspended</option>
-          </Select>
+          <CustomSelect
+            value={statusFilter}
+            onChange={(val) => setStatusFilter(val)}
+            options={[
+              { value: 'All', label: 'All Statuses' },
+              { value: 'Available', label: 'Available' },
+              { value: 'On Trip', label: 'On Trip' },
+              { value: 'Off Duty', label: 'Off Duty' },
+              { value: 'Suspended', label: 'Suspended' }
+            ]}
+          />
         </Field>
       </div>
 
@@ -198,16 +209,16 @@ export default function Drivers() {
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-[var(--color-border)] text-[var(--color-text-muted)]">
-                <th className="px-4 py-3 font-medium">DRIVER NAME</th>
-                <th className="px-4 py-3 font-medium">LICENSE NO.</th>
-                <th className="px-4 py-3 font-medium">CATEGORY</th>
-                <th className="px-4 py-3 font-medium">LICENSE EXPIRY</th>
-                <th className="px-4 py-3 font-medium">EXPIRY STATUS</th>
-                <th className="px-4 py-3 font-medium">CONTACT</th>
-                <th className="px-4 py-3 font-medium">SAFETY SCORE</th>
-                <th className="px-4 py-3 font-medium">STATUS</th>
-                {isEditable && <th className="px-4 py-3 font-medium text-right">ACTIONS</th>}
+              <tr className="border-b border-[var(--color-border)] text-[var(--color-text-faint)] font-semibold tracking-tight text-[11px] bg-[var(--color-panel-2)]">
+                <th className="px-4 py-3 font-semibold">Driver Name</th>
+                <th className="px-4 py-3 font-semibold">License No</th>
+                <th className="px-4 py-3 font-semibold">Category</th>
+                <th className="px-4 py-3 font-semibold">License Expiry</th>
+                <th className="px-4 py-3 font-semibold">Expiry Status</th>
+                <th className="px-4 py-3 font-semibold">Contact</th>
+                <th className="px-4 py-3 font-semibold">Safety Score</th>
+                <th className="px-4 py-3 font-semibold">Status</th>
+                {isEditable && <th className="px-4 py-3 font-semibold text-right">Actions</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--color-border-soft)]">
@@ -219,26 +230,26 @@ export default function Drivers() {
                     <td className="px-4 py-3.5 font-medium text-[var(--color-text)]">
                       {drv.name}
                     </td>
-                    <td className="px-4 py-3.5 font-display font-semibold text-[var(--color-text)]">
+                    <td className="px-4 py-3.5 font-mono text-[var(--color-text)] font-semibold">
                       {drv.license_no}
                     </td>
-                    <td className="px-4 py-3.5 font-display font-medium text-[var(--color-text)]">
+                    <td className="px-4 py-3.5 font-mono font-medium text-[var(--color-text)]">
                       {drv.license_category}
                     </td>
-                    <td className="px-4 py-3.5 font-display">
+                    <td className="px-4 py-3.5 font-mono">
                       {fmtDate(drv.license_expiry)}
                     </td>
                     <td className="px-4 py-3.5">
                       {getExpiryBadge(drv.license_expiry)}
                     </td>
-                    <td className="px-4 py-3.5 font-display">{drv.contact}</td>
+                    <td className="px-4 py-3.5 font-mono">{drv.contact}</td>
                     <td className="px-4 py-3.5">
                       <div className="flex items-center gap-1.5">
-                        <span className="font-display font-bold" style={{ color: safety.color }}>
+                        <span className="font-mono font-bold" style={{ color: safety.color }}>
                           {drv.safety_score}/100
                         </span>
                         {safety.icon}
-                        <span className="text-[9px] uppercase font-semibold text-[var(--color-text-faint)]">
+                        <span className="text-[10px] font-semibold text-[var(--color-text-faint)]">
                           {safety.text}
                         </span>
                       </div>

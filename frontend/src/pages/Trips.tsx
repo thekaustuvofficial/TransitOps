@@ -173,7 +173,7 @@ export default function Trips() {
       {/* Page Header */}
       <div>
         <h1 className="font-display text-xl font-bold tracking-tight text-[var(--color-text)] sm:text-2xl">
-          Trip Dispatcher & Lifecycle
+          Trip Management
         </h1>
         <p className="text-xs text-[var(--color-text-muted)]">
           Draft new trips, assign eligible vehicles & drivers with smart capacity checking, and complete dispatch routes.
@@ -186,8 +186,8 @@ export default function Trips() {
           {/* Create Trip Card */}
           {isEditable && (
             <Card className="p-5 border-[var(--color-border)] bg-[var(--color-panel)]">
-              <h2 className="font-display mb-4 text-xs font-semibold uppercase tracking-wider text-[var(--color-text)]">
-                Create New Trip Route
+              <h2 className="font-display text-sm font-bold tracking-tight text-[var(--color-text)]">
+                Create Trip Route
               </h2>
               <form onSubmit={handleCreateTrip} className="space-y-4">
                 {formErrorMsg && <Banner tone="error">{formErrorMsg}</Banner>}
@@ -257,8 +257,8 @@ export default function Trips() {
             <Card className="p-5 border-[var(--color-border)] bg-[var(--color-panel)]" accent={selectedTrip.status === 'Draft' ? 'var(--color-status-draft)' : selectedTrip.status === 'Dispatched' ? 'var(--color-status-ontrip)' : 'var(--color-status-available)'}>
               <div className="mb-4 flex items-center justify-between">
                 <div>
-                  <span className="font-display text-[10px] font-bold text-[var(--color-text-faint)]">SELECTED OPERATION</span>
-                  <h3 className="font-display text-base font-bold text-[var(--color-text)]">
+                  <span className="text-[10px] font-bold text-[var(--color-text-faint)] tracking-tight">Selected Dispatch</span>
+                  <h3 className="font-mono text-base font-bold text-[var(--color-text)]">
                     {selectedTrip.trip_code}
                   </h3>
                 </div>
@@ -295,13 +295,13 @@ export default function Trips() {
                 </div>
                 <div className="flex justify-between border-b border-[var(--color-border-soft)] pb-2">
                   <span>Cargo Weight</span>
-                  <span className="font-display font-medium text-[var(--color-text)]">
+                  <span className="font-mono font-medium text-[var(--color-text)]">
                     {fmtNumber(selectedTrip.cargo_weight_kg)} kg
                   </span>
                 </div>
                 <div className="flex justify-between border-b border-[var(--color-border-soft)] pb-2">
                   <span>Revenue</span>
-                  <span className="font-display font-medium text-[var(--color-text)]">
+                  <span className="font-mono font-medium text-[var(--color-text)]">
                     {fmtCurrency(selectedTrip.revenue)}
                   </span>
                 </div>
@@ -363,8 +363,8 @@ export default function Trips() {
         {/* Right Side: Live Board */}
         <div className="lg:col-span-7">
           <Card className="p-5 border-[var(--color-border)] bg-[var(--color-panel)] h-full flex flex-col">
-            <h2 className="font-display mb-4 text-xs font-semibold uppercase tracking-wider text-[var(--color-text)]">
-              Operations Live Board
+            <h2 className="font-display mb-4 text-sm font-bold tracking-tight text-[var(--color-text)]">
+              Operations Board
             </h2>
 
             <div className="flex-1 space-y-3">
@@ -379,13 +379,13 @@ export default function Trips() {
                     onClick={() => setSelectedTripId(trip.id)}
                     className={`relative flex items-center justify-between rounded-lg border p-4 cursor-pointer transition-all duration-150 ${
                       isSelected
-                        ? 'border-amber-500 bg-amber-500/5'
+                        ? 'border-orange-500 bg-orange-500/5 shadow-xs'
                         : 'border-[var(--color-border)] hover:border-[var(--color-text-faint)] bg-[var(--color-panel-2)]'
                     }`}
                   >
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="font-display text-xs font-bold text-[var(--color-text)]">
+                        <span className="font-mono text-xs font-bold text-[var(--color-text)]">
                           {trip.trip_code}
                         </span>
                         <StatusBadge status={trip.status} />
@@ -393,15 +393,15 @@ export default function Trips() {
                       <div className="text-xs text-[var(--color-text-muted)]">
                         {trip.source} <span className="text-[var(--color-text-faint)]">→</span> {trip.destination}
                       </div>
-                      <div className="flex flex-wrap gap-x-3 gap-y-1 pt-1.5 text-[10px] text-[var(--color-text-faint)]">
+                      <div className="flex flex-wrap gap-x-3 gap-y-1 pt-1.5 text-[10px] text-[var(--color-text-faint)] font-mono">
                         <span>Cargo: {fmtNumber(trip.cargo_weight_kg)} kg</span>
                         <span>Dist: {trip.planned_distance_km} km</span>
-                        {assignedVehicle && <span>Veh: {assignedVehicle.name}</span>}
-                        {assignedDriver && <span>Drv: {assignedDriver.name}</span>}
+                        {assignedVehicle && <span className="font-sans">Veh: {assignedVehicle.name}</span>}
+                        {assignedDriver && <span className="font-sans">Drv: {assignedDriver.name}</span>}
                       </div>
                     </div>
 
-                    <div className="text-right font-display text-xs font-semibold text-[var(--color-text)]">
+                    <div className="text-right font-mono text-xs font-semibold text-[var(--color-text)]">
                       {fmtCurrency(trip.revenue)}
                     </div>
                   </div>
@@ -471,7 +471,7 @@ export default function Trips() {
                     <div className="font-semibold text-red-200">Capacity Violation:</div>
                     Vehicle Capacity: {selectedV.max_capacity_kg} kg <br />
                     Cargo Weight: {selectedTrip.cargo_weight_kg} kg <br />
-                    ✕ Capacity exceeded by {selectedTrip.cargo_weight_kg - selectedV.max_capacity_kg} kg — dispatch blocked!
+                    Capacity exceeded by {selectedTrip.cargo_weight_kg - selectedV.max_capacity_kg} kg — dispatch blocked.
                   </Banner>
                 );
               }

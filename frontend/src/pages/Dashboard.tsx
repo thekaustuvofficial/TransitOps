@@ -3,7 +3,7 @@ import { useDb } from '../hooks/useDb';
 import { KpiCard } from '../components/KpiCard';
 import { StatusBadge } from '../components/StatusBadge';
 import { ActivityFeed } from '../components/ActivityFeed';
-import { Card } from '../components/primitives';
+import { Card, CustomSelect } from '../components/primitives';
 import { Filter } from 'lucide-react';
 
 export default function Dashboard() {
@@ -69,6 +69,13 @@ export default function Dashboard() {
     return Math.round((count / totalFilteredVehicles) * 100);
   };
 
+  const handleKpiClick = (module: string, filterKey?: string, filterValue?: string) => {
+    if (filterKey && filterValue) {
+      sessionStorage.setItem(filterKey, filterValue);
+    }
+    window.location.hash = `#/${module}`;
+  };
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -83,47 +90,46 @@ export default function Dashboard() {
         </div>
 
         {/* Global Filter Bar */}
-        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-2">
-          <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)] font-medium mr-2">
-            <Filter size={14} />
-            <span>FILTERS</span>
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-2 z-10">
+          <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)] font-semibold mr-1">
+            <Filter size={13} />
+            <span>Filters:</span>
           </div>
 
-          <select
+          <CustomSelect
             value={vehicleType}
-            onChange={(e) => setVehicleType(e.target.value)}
-            className="rounded border border-[var(--color-border)] bg-[var(--color-panel-2)] px-2 py-1 text-xs text-[var(--color-text)] focus:border-amber-500 focus:outline-none"
-          >
-            <option value="All">Type: All</option>
-            <option value="Van">Van</option>
-            <option value="Truck">Truck</option>
-            <option value="Mini">Mini</option>
-          </select>
+            onChange={(val) => setVehicleType(val)}
+            options={[
+              { value: 'All', label: 'Type: All' },
+              { value: 'Van', label: 'Van' },
+              { value: 'Truck', label: 'Truck' },
+              { value: 'Mini', label: 'Mini' }
+            ]}
+            className="w-32"
+          />
 
-          <select
+          <CustomSelect
             value={vehicleStatus}
-            onChange={(e) => setVehicleStatus(e.target.value)}
-            className="rounded border border-[var(--color-border)] bg-[var(--color-panel-2)] px-2 py-1 text-xs text-[var(--color-text)] focus:border-amber-500 focus:outline-none"
-          >
-            <option value="All">Status: All</option>
-            <option value="Available">Available</option>
-            <option value="On Trip">On Trip</option>
-            <option value="In Shop">In Shop</option>
-            <option value="Retired">Retired</option>
-          </select>
+            onChange={(val) => setVehicleStatus(val)}
+            options={[
+              { value: 'All', label: 'Status: All' },
+              { value: 'Available', label: 'Available' },
+              { value: 'On Trip', label: 'On Trip' },
+              { value: 'In Shop', label: 'In Shop' },
+              { value: 'Retired', label: 'Retired' }
+            ]}
+            className="w-36"
+          />
 
-          <select
+          <CustomSelect
             value={region}
-            onChange={(e) => setRegion(e.target.value)}
-            className="rounded border border-[var(--color-border)] bg-[var(--color-panel-2)] px-2 py-1 text-xs text-[var(--color-text)] focus:border-amber-500 focus:outline-none"
-          >
-            <option value="All">Region: All</option>
-            {regions.map((reg) => (
-              <option key={reg} value={reg}>
-                {reg}
-              </option>
-            ))}
-          </select>
+            onChange={(val) => setRegion(val)}
+            options={[
+              { value: 'All', label: 'Region: All' },
+              ...regions.map((reg) => ({ value: reg, label: reg }))
+            ]}
+            className="w-36"
+          />
         </div>
       </div>
 
@@ -134,42 +140,49 @@ export default function Dashboard() {
           value={activeVehiclesCount}
           accent="var(--color-status-ontrip)"
           sub={`out of ${totalNonRetiredCount} non-retired`}
+          onClick={() => handleKpiClick('fleet', 'fleet_status_filter', 'On Trip')}
         />
         <KpiCard
           label="Available"
           value={availableVehiclesCount}
           accent="var(--color-status-available)"
           sub="ready for dispatch"
+          onClick={() => handleKpiClick('fleet', 'fleet_status_filter', 'Available')}
         />
         <KpiCard
           label="In Shop"
           value={inMaintenanceCount}
           accent="var(--color-status-shop)"
           sub="under maintenance"
+          onClick={() => handleKpiClick('fleet', 'fleet_status_filter', 'In Shop')}
         />
         <KpiCard
           label="Active Trips"
           value={activeTripsCount}
           accent="var(--color-status-ontrip)"
           sub="trips currently dispatched"
+          onClick={() => handleKpiClick('trips')}
         />
         <KpiCard
           label="Pending Trips"
           value={pendingTripsCount}
           accent="var(--color-status-draft)"
           sub="waiting for dispatch"
+          onClick={() => handleKpiClick('trips')}
         />
         <KpiCard
           label="Drivers On Duty"
           value={activeDriversCount}
           accent="var(--color-status-available)"
           sub="available & on trip"
+          onClick={() => handleKpiClick('drivers')}
         />
         <KpiCard
           label="Fleet Utilization"
           value={`${fleetUtilization}%`}
           accent={fleetUtilization > 75 ? 'var(--color-status-available)' : 'var(--color-status-shop)'}
           sub="active / total active fleet"
+          onClick={() => handleKpiClick('analytics')}
         />
       </div>
 
@@ -179,22 +192,22 @@ export default function Dashboard() {
         <div className="lg:col-span-8 space-y-4">
           <Card className="p-5 border-[var(--color-border)] bg-[var(--color-panel)]">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="font-display text-sm font-semibold tracking-wide uppercase text-[var(--color-text)]">
-                Recent Operations Ledger
+              <h2 className="font-display text-sm font-bold tracking-tight text-[var(--color-text)]">
+                Recent Operations
               </h2>
-              <span className="text-[11px] text-[var(--color-text-faint)]">Showing latest 8 trips</span>
+              <span className="text-[11px] text-[var(--color-text-faint)] font-medium">Latest 8 dispatches</span>
             </div>
 
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead>
-                  <tr className="border-b border-[var(--color-border)] text-[var(--color-text-muted)]">
-                    <th className="pb-2.5 font-medium">TRIP CODE</th>
-                    <th className="pb-2.5 font-medium">ROUTE</th>
-                    <th className="pb-2.5 font-medium">VEHICLE</th>
-                    <th className="pb-2.5 font-medium">DRIVER</th>
-                    <th className="pb-2.5 font-medium">CARGO</th>
-                    <th className="pb-2.5 font-medium">STATUS</th>
+                  <tr className="border-b border-[var(--color-border)] text-[var(--color-text-faint)] font-semibold tracking-tight text-[11px]">
+                    <th className="pb-2.5 font-semibold">Code</th>
+                    <th className="pb-2.5 font-semibold">Route</th>
+                    <th className="pb-2.5 font-semibold">Vehicle</th>
+                    <th className="pb-2.5 font-semibold">Driver</th>
+                    <th className="pb-2.5 font-semibold">Cargo</th>
+                    <th className="pb-2.5 font-semibold">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--color-border-soft)]">
@@ -240,8 +253,8 @@ export default function Dashboard() {
 
           {/* Fleet Status Chart / Breakdown */}
           <Card className="p-5 border-[var(--color-border)] bg-[var(--color-panel)]">
-            <h3 className="font-display mb-4 text-xs font-semibold uppercase tracking-wider text-[var(--color-text)]">
-              Fleet Status Distribution
+            <h3 className="font-display mb-4 text-sm font-bold tracking-tight text-[var(--color-text)]">
+              Fleet Distribution
             </h3>
             <div className="space-y-4">
               {/* Available */}

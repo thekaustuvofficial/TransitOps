@@ -24,15 +24,15 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {toasts.map((t) => (
           <div
             key={t.id}
-            className={`animate-slide-in pointer-events-auto flex items-start gap-2 rounded-md border px-3.5 py-3 text-sm shadow-xl backdrop-blur ${
+            className={`animate-slide-in pointer-events-auto flex items-start gap-2 rounded-lg border px-3.5 py-3 text-sm shadow-xl backdrop-blur-sm ${
               t.tone === 'success'
-                ? 'border-emerald-500/40 bg-[#0e1712]/95 text-emerald-200'
-                : 'border-red-500/40 bg-[#1a0e0e]/95 text-red-200'
+                ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-200 dark:bg-emerald-950/80'
+                : 'border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-200 dark:bg-red-950/80'
             }`}
           >
             {t.tone === 'success' ? <CheckCircle2 size={16} className="mt-0.5 shrink-0" /> : <XCircle size={16} className="mt-0.5 shrink-0" />}
             <span className="flex-1 leading-snug">{t.message}</span>
-            <button onClick={() => dismiss(t.id)} className="text-current opacity-60 hover:opacity-100">
+            <button onClick={() => dismiss(t.id)} className="text-current opacity-60 hover:opacity-100 transition-opacity">
               <X size={14} />
             </button>
           </div>

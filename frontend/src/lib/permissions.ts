@@ -10,7 +10,7 @@ export const PERMISSIONS: PermissionMatrix = {
     fleet: 'full', drivers: 'full', trips: 'none', fuel_exp: 'none',
     analytics: 'full', maintenance: 'full', settings: 'full',
   },
-  dispatcher: {
+  driver: {
     fleet: 'view', drivers: 'none', trips: 'full', fuel_exp: 'none',
     analytics: 'none', maintenance: 'view', settings: 'none',
   },
@@ -26,14 +26,14 @@ export const PERMISSIONS: PermissionMatrix = {
 
 export const ROLE_LABEL: Record<Role, string> = {
   fleet_manager: 'Fleet Manager',
-  dispatcher: 'Dispatcher',
+  driver: 'Driver',
   safety_officer: 'Safety Officer',
   financial_analyst: 'Financial Analyst',
 };
 
 export const ROLE_INITIALS: Record<Role, string> = {
   fleet_manager: 'FM',
-  dispatcher: 'DP',
+  driver: 'DR',
   safety_officer: 'SO',
   financial_analyst: 'FA',
 };
@@ -53,7 +53,7 @@ export function canView(role: Role, module: Module): boolean {
 // First module a role should land on after login.
 export const HOME_ROUTE: Record<Role, string> = {
   fleet_manager: '/fleet',
-  dispatcher: '/trips',
+  driver: '/trips',
   safety_officer: '/drivers',
   financial_analyst: '/analytics',
 };

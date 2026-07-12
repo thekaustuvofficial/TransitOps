@@ -5,7 +5,7 @@ const daysFromNow = (d: number) => new Date(Date.now() + d * 86400000).toISOStri
 const daysAgo = (d: number) => new Date(Date.now() - d * 86400000).toISOString();
 
 export const SEED_USERS: User[] = [
-  { id: uid('usr'), name: 'Raven K.', email: 'raven.k@transitops.in', password: 'demo1234', role: 'dispatcher' },
+  { id: uid('usr'), name: 'Raven K.', email: 'raven.k@transitops.in', password: 'demo1234', role: 'driver' },
   { id: uid('usr'), name: 'Meera Shah', email: 'meera.s@transitops.in', password: 'demo1234', role: 'fleet_manager' },
   { id: uid('usr'), name: 'Arjun Nair', email: 'arjun.n@transitops.in', password: 'demo1234', role: 'safety_officer' },
   { id: uid('usr'), name: 'Priyanka Desai', email: 'priyanka.d@transitops.in', password: 'demo1234', role: 'financial_analyst' },
@@ -57,7 +57,7 @@ export const SEED_EXPENSES: Expense[] = [
 
 export const SEED_ACTIVITY: ActivityEntry[] = [
   { id: uid('act'), timestamp: daysAgo(6), actor: 'Meera Shah', role: 'fleet_manager', action: 'vehicle.created', detail: 'Registered VAN-05 (GJ01AB4521)', ok: true },
-  { id: uid('act'), timestamp: daysAgo(4), actor: 'Raven K.', role: 'dispatcher', action: 'trip.completed', detail: 'TR002: Vatva Industrial Area → Sanand Warehouse — Van-05 & Alex back to Available', ok: true },
-  { id: uid('act'), timestamp: daysAgo(1), actor: 'Raven K.', role: 'dispatcher', action: 'trip.dispatched', detail: 'TR001: Truck-11 / Priya — cargo 3200/5000kg OK', ok: true },
+  { id: uid('act'), timestamp: daysAgo(4), actor: 'Raven K.', role: 'driver', action: 'trip.completed', detail: 'TR002: Vatva Industrial Area → Sanand Warehouse — Van-05 & Alex back to Available', ok: true },
+  { id: uid('act'), timestamp: daysAgo(1), actor: 'Raven K.', role: 'driver', action: 'trip.dispatched', detail: 'TR001: Truck-11 / Priya — cargo 3200/5000kg OK', ok: true },
   { id: uid('act'), timestamp: daysAgo(1), actor: 'Meera Shah', role: 'fleet_manager', action: 'maintenance.opened', detail: 'MINI-03 → Tyre Replace — vehicle set to In Shop', ok: true },
 ];

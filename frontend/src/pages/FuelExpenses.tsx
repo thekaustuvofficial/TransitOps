@@ -156,34 +156,34 @@ export default function FuelExpenses() {
       {/* Tab Contents */}
       {activeTab === 'vehicles' && (
         <Card className="overflow-hidden border-[var(--color-border)] bg-[var(--color-panel)]">
-          <div className="p-4 border-b border-[var(--color-border)]">
-            <h3 className="font-display text-xs font-semibold uppercase text-[var(--color-text)]">
-              Operational Cost Formula: Fuel + Maintenance + Tolls/Other
+          <div className="p-4 border-b border-[var(--color-border)] bg-[var(--color-panel-2)]">
+            <h3 className="font-display text-xs font-semibold text-[var(--color-text)]">
+              Operational Cost Formula: Fuel + Maintenance + Tolls & Other
             </h3>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="border-b border-[var(--color-border)] text-[var(--color-text-muted)]">
-                  <th className="px-4 py-3 font-medium">VEHICLE</th>
-                  <th className="px-4 py-3 font-medium">REG NO.</th>
-                  <th className="px-4 py-3 font-medium">TYPE</th>
-                  <th className="px-4 py-3 font-medium font-display">FUEL COST</th>
-                  <th className="px-4 py-3 font-medium font-display">MAINTENANCE COST</th>
-                  <th className="px-4 py-3 font-medium font-display">TOLLS & OTHER</th>
-                  <th className="px-4 py-3 font-medium font-display">TOTAL OP. COST</th>
+                <tr className="border-b border-[var(--color-border)] text-[var(--color-text-faint)] font-semibold tracking-tight text-[11px] bg-[var(--color-panel-2)]">
+                  <th className="px-4 py-3 font-semibold">Vehicle</th>
+                  <th className="px-4 py-3 font-semibold">Reg No</th>
+                  <th className="px-4 py-3 font-semibold">Type</th>
+                  <th className="px-4 py-3 font-semibold">Fuel Cost</th>
+                  <th className="px-4 py-3 font-semibold">Maintenance Cost</th>
+                  <th className="px-4 py-3 font-semibold">Tolls & Other</th>
+                  <th className="px-4 py-3 font-semibold">Total Op. Cost</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--color-border-soft)]">
                 {vehicleCostBreakdown.map(({ vehicle, fuelCost, maintCost, tripExp, total }) => (
                   <tr key={vehicle.id} className="text-[var(--color-text-muted)] hover:text-[var(--color-text)]">
                     <td className="px-4 py-3.5 font-medium text-[var(--color-text)]">{vehicle.name}</td>
-                    <td className="px-4 py-3.5 font-display font-semibold">{vehicle.reg_no}</td>
+                    <td className="px-4 py-3.5 font-mono font-semibold">{vehicle.reg_no}</td>
                     <td className="px-4 py-3.5">{vehicle.type}</td>
-                    <td className="px-4 py-3.5 font-display">{fmtCurrency(fuelCost)}</td>
-                    <td className="px-4 py-3.5 font-display">{fmtCurrency(maintCost)}</td>
-                    <td className="px-4 py-3.5 font-display">{fmtCurrency(tripExp)}</td>
-                    <td className="px-4 py-3.5 font-display font-bold text-[var(--color-text)]">
+                    <td className="px-4 py-3.5 font-mono">{fmtCurrency(fuelCost)}</td>
+                    <td className="px-4 py-3.5 font-mono">{fmtCurrency(maintCost)}</td>
+                    <td className="px-4 py-3.5 font-mono">{fmtCurrency(tripExp)}</td>
+                    <td className="px-4 py-3.5 font-mono font-bold text-[var(--color-text)]">
                       {fmtCurrency(total)}
                     </td>
                   </tr>
@@ -199,13 +199,13 @@ export default function FuelExpenses() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="border-b border-[var(--color-border)] text-[var(--color-text-muted)]">
-                  <th className="px-4 py-3 font-medium">VEHICLE</th>
-                  <th className="px-4 py-3 font-medium">REG NO.</th>
-                  <th className="px-4 py-3 font-medium">DATE</th>
-                  <th className="px-4 py-3 font-medium font-display">LITERS</th>
-                  <th className="px-4 py-3 font-medium font-display">COST</th>
-                  <th className="px-4 py-3 font-medium">TRIP SOURCE</th>
+                <tr className="border-b border-[var(--color-border)] text-[var(--color-text-faint)] font-semibold tracking-tight text-[11px] bg-[var(--color-panel-2)]">
+                  <th className="px-4 py-3 font-semibold">Vehicle</th>
+                  <th className="px-4 py-3 font-semibold">Reg No</th>
+                  <th className="px-4 py-3 font-semibold">Date</th>
+                  <th className="px-4 py-3 font-semibold">Liters</th>
+                  <th className="px-4 py-3 font-semibold">Cost</th>
+                  <th className="px-4 py-3 font-semibold">Trip / Reason</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--color-border-soft)]">
@@ -216,11 +216,11 @@ export default function FuelExpenses() {
                   return (
                     <tr key={log.id} className="text-[var(--color-text-muted)] hover:text-[var(--color-text)]">
                       <td className="px-4 py-3.5 font-medium text-[var(--color-text)]">{vehicle?.name || '—'}</td>
-                      <td className="px-4 py-3.5 font-display">{vehicle?.reg_no || '—'}</td>
-                      <td className="px-4 py-3.5 font-display">{fmtDate(log.date)}</td>
-                      <td className="px-4 py-3.5 font-display">{fmtNumber(log.liters)} L</td>
-                      <td className="px-4 py-3.5 font-display text-[var(--color-text)]">{fmtCurrency(log.cost)}</td>
-                      <td className="px-4 py-3.5">{trip ? `${trip.trip_code} (${trip.source} → ${trip.destination})` : 'Refuel Log'}</td>
+                      <td className="px-4 py-3.5 font-mono">{vehicle?.reg_no || '—'}</td>
+                      <td className="px-4 py-3.5 font-mono">{fmtDate(log.date)}</td>
+                      <td className="px-4 py-3.5 font-mono">{fmtNumber(log.liters)} L</td>
+                      <td className="px-4 py-3.5 font-mono text-[var(--color-text)]">{fmtCurrency(log.cost)}</td>
+                      <td className="px-4 py-3.5">{trip ? <span className="font-mono">{trip.trip_code}</span> : <span className="text-[var(--color-text-faint)]">Refuel Log</span>}</td>
                     </tr>
                   );
                 })}
@@ -242,13 +242,13 @@ export default function FuelExpenses() {
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead>
-                <tr className="border-b border-[var(--color-border)] text-[var(--color-text-muted)]">
-                  <th className="px-4 py-3 font-medium">TRIP CODE</th>
-                  <th className="px-4 py-3 font-medium">VEHICLE</th>
-                  <th className="px-4 py-3 font-medium">DATE</th>
-                  <th className="px-4 py-3 font-medium font-display">TOLL FEE</th>
-                  <th className="px-4 py-3 font-medium font-display">OTHER CHARGES</th>
-                  <th className="px-4 py-3 font-medium font-display">TOTAL EXPENSE</th>
+                <tr className="border-b border-[var(--color-border)] text-[var(--color-text-faint)] font-semibold tracking-tight text-[11px] bg-[var(--color-panel-2)]">
+                  <th className="px-4 py-3 font-semibold">Trip Code</th>
+                  <th className="px-4 py-3 font-semibold">Vehicle</th>
+                  <th className="px-4 py-3 font-semibold">Date</th>
+                  <th className="px-4 py-3 font-semibold">Toll Fee</th>
+                  <th className="px-4 py-3 font-semibold">Other Charges</th>
+                  <th className="px-4 py-3 font-semibold">Total Expense</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--color-border-soft)]">
@@ -258,12 +258,12 @@ export default function FuelExpenses() {
 
                   return (
                     <tr key={exp.id} className="text-[var(--color-text-muted)] hover:text-[var(--color-text)]">
-                      <td className="px-4 py-3.5 font-display font-semibold text-[var(--color-text)]">{trip?.trip_code || '—'}</td>
+                      <td className="px-4 py-3.5 font-mono font-semibold text-[var(--color-text)]">{trip?.trip_code || '—'}</td>
                       <td className="px-4 py-3.5 font-medium">{vehicle?.name || '—'}</td>
-                      <td className="px-4 py-3.5 font-display">{fmtDate(exp.date)}</td>
-                      <td className="px-4 py-3.5 font-display">{fmtCurrency(exp.toll)}</td>
-                      <td className="px-4 py-3.5 font-display">{fmtCurrency(exp.other)}</td>
-                      <td className="px-4 py-3.5 font-display font-bold text-[var(--color-text)]">
+                      <td className="px-4 py-3.5 font-mono">{fmtDate(exp.date)}</td>
+                      <td className="px-4 py-3.5 font-mono">{fmtCurrency(exp.toll)}</td>
+                      <td className="px-4 py-3.5 font-mono">{fmtCurrency(exp.other)}</td>
+                      <td className="px-4 py-3.5 font-mono font-bold text-[var(--color-text)]">
                         {fmtCurrency(exp.toll + exp.other)}
                       </td>
                     </tr>

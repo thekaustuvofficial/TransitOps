@@ -2,8 +2,9 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { useDb } from '../hooks/useDb';
 import { useToast } from '../context/ToastContext';
 import { Card, Button } from '../components/primitives';
+import { KpiCard } from '../components/KpiCard';
 import { fmtCurrency } from '../lib/format';
-import { Download, AlertTriangle, TrendingUp, Compass, Activity, ShieldAlert } from 'lucide-react';
+import { Download, AlertTriangle, FileText } from 'lucide-react';
 
 export default function Analytics() {
   const db = useDb();
@@ -115,6 +116,64 @@ export default function Analytics() {
     }
   };
 
+  // 5. PDF Exporter (uses browser print)
+  const handleExportPDF = () => {
+    try {
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) { toast.push('error', 'Popup blocked. Please allow popups for PDF export.'); return; }
+
+      const rows = fleetCostsBreakdown.map((item) =>
+        `<tr>
+          <td>${item.name}</td><td>${item.regNo}</td><td>${item.type}</td>
+          <td style="text-align:right">${fmtCurrency(item.acqCost)}</td>
+          <td style="text-align:right">${fmtCurrency(item.fuelCost)}</td>
+          <td style="text-align:right">${fmtCurrency(item.maintCost)}</td>
+          <td style="text-align:right">${fmtCurrency(item.tripExp)}</td>
+          <td style="text-align:right;font-weight:bold">${fmtCurrency(item.totalCost)}</td>
+          <td style="text-align:right;color:#16a34a">${fmtCurrency(item.totalRevenue)}</td>
+          <td style="text-align:right;font-weight:bold">${item.roiPercent}%</td>
+        </tr>`
+      ).join('');
+
+      printWindow.document.write(`
+        <!DOCTYPE html><html><head><title>TransitOps Fleet ROI Report</title>
+        <style>
+          body { font-family: 'Inter', Arial, sans-serif; padding: 40px; color: #1e293b; }
+          h1 { font-size: 20px; margin-bottom: 4px; }
+          p.sub { font-size: 12px; color: #64748b; margin-bottom: 24px; }
+          table { width: 100%; border-collapse: collapse; font-size: 11px; }
+          th { background: #f1f5f9; padding: 8px 12px; text-align: left; border-bottom: 2px solid #e2e8f0; font-weight: 600; }
+          td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; }
+          .kpi-row { display: flex; gap: 16px; margin-bottom: 24px; }
+          .kpi { flex: 1; padding: 16px; border: 1px solid #e2e8f0; border-radius: 8px; }
+          .kpi-label { font-size: 10px; text-transform: uppercase; color: #64748b; font-weight: 600; letter-spacing: 0.5px; }
+          .kpi-value { font-size: 20px; font-weight: 700; margin-top: 4px; }
+          @media print { body { padding: 20px; } }
+        </style></head><body>
+        <h1>TransitOps — Fleet ROI Report</h1>
+        <p class="sub">Generated: ${new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+        <div class="kpi-row">
+          <div class="kpi"><div class="kpi-label">Fuel Efficiency</div><div class="kpi-value">${fuelEfficiency} km/L</div></div>
+          <div class="kpi"><div class="kpi-label">Fleet Utilization</div><div class="kpi-value">${fleetUtilizationPercent}%</div></div>
+          <div class="kpi"><div class="kpi-label">Total Op. Cost</div><div class="kpi-value">${fmtCurrency(totalOperationalCost)}</div></div>
+          <div class="kpi"><div class="kpi-label">Total Revenue</div><div class="kpi-value">${fmtCurrency(totalRevenue)}</div></div>
+        </div>
+        <table><thead><tr>
+          <th>Vehicle</th><th>Reg No</th><th>Type</th><th style="text-align:right">Acq. Cost</th>
+          <th style="text-align:right">Fuel</th><th style="text-align:right">Maint.</th>
+          <th style="text-align:right">Tolls</th><th style="text-align:right">Total Cost</th>
+          <th style="text-align:right">Revenue</th><th style="text-align:right">ROI</th>
+        </tr></thead><tbody>${rows}</tbody></table>
+        </body></html>
+      `);
+      printWindow.document.close();
+      setTimeout(() => { printWindow.print(); }, 300);
+      toast.push('success', 'PDF export opened in print dialog.');
+    } catch (error) {
+      toast.push('error', 'Failed to generate PDF export.');
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -128,67 +187,50 @@ export default function Analytics() {
           </p>
         </div>
 
-        <Button onClick={handleExportCSV} className="shrink-0 font-display">
-          <Download size={16} />
-          Export ROI Ledger (CSV)
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={handleExportCSV} className="shrink-0 font-display">
+            <Download size={16} />
+            Export CSV
+          </Button>
+          <Button onClick={handleExportPDF} variant="secondary" className="shrink-0 font-display">
+            <FileText size={16} />
+            Export PDF
+          </Button>
+        </div>
       </div>
 
       {/* KPI Metric Grid */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Fuel Efficiency */}
-        <Card className="p-4 border-[var(--color-border)] bg-[var(--color-panel)] flex items-center gap-4">
-          <div className="rounded-lg bg-emerald-500/10 p-2.5 text-emerald-400">
-            <Compass size={22} />
-          </div>
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Fuel Efficiency</p>
-            <p className="font-display text-lg font-bold text-[var(--color-text)] mt-0.5">{fuelEfficiency} km/L</p>
-            <p className="text-[9px] text-[var(--color-text-faint)]">across completed trips</p>
-          </div>
-        </Card>
-
-        {/* Fleet Utilization */}
-        <Card className="p-4 border-[var(--color-border)] bg-[var(--color-panel)] flex items-center gap-4">
-          <div className="rounded-lg bg-blue-500/10 p-2.5 text-blue-400">
-            <Activity size={22} />
-          </div>
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Fleet Utilization</p>
-            <p className="font-display text-lg font-bold text-[var(--color-text)] mt-0.5">{fleetUtilizationPercent}%</p>
-            <p className="text-[9px] text-[var(--color-text-faint)]">of active non-retired fleet</p>
-          </div>
-        </Card>
-
-        {/* Operational Cost */}
-        <Card className="p-4 border-[var(--color-border)] bg-[var(--color-panel)] flex items-center gap-4">
-          <div className="rounded-lg bg-red-500/10 p-2.5 text-red-400">
-            <ShieldAlert size={22} />
-          </div>
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Operational Cost</p>
-            <p className="font-display text-lg font-bold text-[var(--color-text)] mt-0.5">{fmtCurrency(totalOperationalCost)}</p>
-            <p className="text-[9px] text-[var(--color-text-faint)]">Fuel + Maintenance + Tolls</p>
-          </div>
-        </Card>
-
-        {/* Vehicle ROI */}
-        <Card className="p-4 border-[var(--color-border)] bg-[var(--color-panel)] flex items-center gap-4">
-          <div className="rounded-lg bg-amber-500/10 p-2.5 text-amber-400">
-            <TrendingUp size={22} />
-          </div>
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">Total Revenue</p>
-            <p className="font-display text-lg font-bold text-[var(--color-text)] mt-0.5">{fmtCurrency(totalRevenue)}</p>
-            <p className="text-[9px] text-[var(--color-text-faint)]">gross completed revenues</p>
-          </div>
-        </Card>
+        <KpiCard
+          label="Fuel Efficiency"
+          value={`${fuelEfficiency} km/L`}
+          accent="var(--color-status-available)"
+          sub="Across completed trips"
+        />
+        <KpiCard
+          label="Fleet Utilization"
+          value={`${fleetUtilizationPercent}%`}
+          accent="var(--color-status-ontrip)"
+          sub="Of active non-retired fleet"
+        />
+        <KpiCard
+          label="Operational Cost"
+          value={fmtCurrency(totalOperationalCost)}
+          accent="var(--color-status-retired)"
+          sub="Fuel + Maintenance + Tolls"
+        />
+        <KpiCard
+          label="Total Revenue"
+          value={fmtCurrency(totalRevenue)}
+          accent="var(--color-status-shop)"
+          sub="Gross completed revenues"
+        />
       </div>
 
       {/* Recharts Profitability Chart */}
-      <Card className="p-5 border-[var(--color-border)] bg-[var(--color-panel)]">
-        <h3 className="font-display mb-4 text-xs font-semibold uppercase tracking-wider text-[var(--color-text)]">
-          Vehicle Cost vs Revenue Comparison
+      <Card className="p-5 border-[var(--color-border)] bg-[var(--color-panel)] shadow-sm">
+        <h3 className="font-display mb-4 text-sm font-bold tracking-tight text-[var(--color-text)]">
+          Cost vs Revenue
         </h3>
         <div className="h-72 w-full text-xs">
           <ResponsiveContainer width="100%" height="100%">
@@ -216,26 +258,26 @@ export default function Analytics() {
       </Card>
 
       {/* Detailed ROI & Cost Anomaly Ledger */}
-      <Card className="overflow-hidden border-[var(--color-border)] bg-[var(--color-panel)]">
-        <div className="p-4 border-b border-[var(--color-border)] flex items-center justify-between">
-          <h3 className="font-display text-xs font-semibold uppercase text-[var(--color-text)]">
-            Vehicle Profitability & Cost Anomalies Ledger
+      <Card className="overflow-hidden border-[var(--color-border)] bg-[var(--color-panel)] shadow-sm">
+        <div className="p-4 border-b border-[var(--color-border)] flex items-center justify-between bg-[var(--color-panel-2)]">
+          <h3 className="font-display text-xs font-bold text-[var(--color-text)]">
+            Profitability & Cost Analysis
           </h3>
-          <span className="text-[10px] text-[var(--color-text-faint)] font-medium">
-            Average Vehicle Cost: {fmtCurrency(averageVehicleCost)}
+          <span className="text-[11px] text-orange-500 font-semibold font-mono">
+            Average Cost: {fmtCurrency(averageVehicleCost)}
           </span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-[var(--color-border)] text-[var(--color-text-muted)]">
-                <th className="px-4 py-3 font-medium">VEHICLE</th>
-                <th className="px-4 py-3 font-medium">REG NO.</th>
-                <th className="px-4 py-3 font-medium font-display text-right">TOTAL COST</th>
-                <th className="px-4 py-3 font-medium font-display text-right">GROSS REVENUE</th>
-                <th className="px-4 py-3 font-medium font-display text-right">NET PROFIT</th>
-                <th className="px-4 py-3 font-medium font-display text-right">ROI (%)</th>
-                <th className="px-4 py-3 font-medium text-right">COST ANOMALY</th>
+              <tr className="border-b border-[var(--color-border)] text-[var(--color-text-faint)] font-semibold tracking-tight text-[11px] bg-[var(--color-panel-2)]">
+                <th className="px-4 py-3 font-semibold">Vehicle</th>
+                <th className="px-4 py-3 font-semibold">Reg No</th>
+                <th className="px-4 py-3 font-semibold text-right">Total Cost</th>
+                <th className="px-4 py-3 font-semibold text-right">Gross Revenue</th>
+                <th className="px-4 py-3 font-semibold text-right">Net Profit</th>
+                <th className="px-4 py-3 font-semibold text-right">ROI</th>
+                <th className="px-4 py-3 font-semibold text-right">Cost Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--color-border-soft)]">
@@ -246,16 +288,16 @@ export default function Analytics() {
                 return (
                   <tr key={item.id} className="text-[var(--color-text-muted)] hover:text-[var(--color-text)]">
                     <td className="px-4 py-3.5 font-medium text-[var(--color-text)]">{item.name}</td>
-                    <td className="px-4 py-3.5 font-display font-semibold">{item.regNo}</td>
-                    <td className="px-4 py-3.5 font-display text-right">{fmtCurrency(item.totalCost)}</td>
-                    <td className="px-4 py-3.5 font-display text-right text-emerald-400">{fmtCurrency(item.totalRevenue)}</td>
-                    <td className={`px-4 py-3.5 font-display text-right ${item.netProfit >= 0 ? 'text-[var(--color-text)]' : 'text-red-400'}`}>
+                    <td className="px-4 py-3.5 font-mono font-semibold">{item.regNo}</td>
+                    <td className="px-4 py-3.5 font-mono text-right">{fmtCurrency(item.totalCost)}</td>
+                    <td className="px-4 py-3.5 font-mono text-right text-emerald-500">{fmtCurrency(item.totalRevenue)}</td>
+                    <td className={`px-4 py-3.5 font-mono text-right ${item.netProfit >= 0 ? 'text-[var(--color-text)]' : 'text-red-500'}`}>
                       {fmtCurrency(item.netProfit)}
                     </td>
-                    <td className={`px-4 py-3.5 font-display font-bold text-right ${item.roiPercent >= 0 ? 'text-emerald-500' : 'text-red-400'}`}>
+                    <td className={`px-4 py-3.5 font-mono font-bold text-right ${item.roiPercent >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
                       {item.roiPercent}%
                     </td>
-                    <td className="px-4 py-3.5 text-right">
+                    <td className="px-4 py-3.5 text-right font-semibold">
                       {isAnomaly ? (
                         <span className="inline-flex items-center gap-1 rounded border border-red-500/30 bg-red-500/10 px-2 py-0.5 text-[9px] font-semibold text-red-400">
                           <AlertTriangle size={10} />

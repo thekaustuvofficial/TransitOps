@@ -55,7 +55,7 @@ function loadSnapshot(): Snapshot {
   };
 }
 
-export class RuleViolation extends Error {}
+export class RuleViolation extends Error { }
 
 type Listener = () => void;
 
@@ -63,14 +63,53 @@ class Database {
   private snap: Snapshot = loadSnapshot();
   private listeners = new Set<Listener>();
 
+  public useBackend = false;
+
   subscribe(fn: Listener): () => void {
     this.listeners.add(fn);
     return () => this.listeners.delete(fn);
   }
 
-  private commit() {
+  async initializeBackend() {
+    try {
+      const res = await fetch('http://localhost:3001/api/data');
+      if (res.ok) {
+        this.snap = await res.json();
+        this.commit(true);
+      }
+    } catch (err) {
+      console.warn("Express backend offline, falling back to local storage snapshot", err);
+    }
+  }
+
+  private async commit(skipBackend = false) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(this.snap));
     this.listeners.forEach((fn) => fn());
+    
+    if (this.useBackend && !skipBackend) {
+      try {
+        await fetch('http://localhost:3001/api/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(this.snap),
+        });
+      } catch (err) {
+        console.warn("Failed to synchronize state to backend server", err);
+      }
+    }
+  }
+
+  exportSnapshot(): Snapshot {
+    return this.snap;
+  }
+
+  importSnapshot(newSnap: Snapshot): boolean {
+    if (newSnap && Array.isArray(newSnap.vehicles) && Array.isArray(newSnap.drivers) && Array.isArray(newSnap.trips)) {
+      this.snap = { ...newSnap };
+      this.commit();
+      return true;
+    }
+    return false;
   }
 
   private log(actor: User, action: ActivityEntry['action'], detail: string, ok = true) {

@@ -1,4 +1,3 @@
-import { Radio } from 'lucide-react';
 import { useDb } from '../hooks/useDb';
 import { timeAgo } from '../lib/format';
 import { ROLE_INITIALS, ROLE_LABEL } from '../lib/permissions';
@@ -24,27 +23,30 @@ export function ActivityFeed() {
   const activities = db.activity;
 
   return (
-    <Card className="flex h-full flex-col overflow-hidden border-[var(--color-border)] bg-[var(--color-panel)]">
+    <Card className="flex h-full flex-col overflow-hidden border-[var(--color-border)] bg-[var(--color-panel)] shadow-sm">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-[var(--color-border)] px-4 py-3">
+      <div className="flex items-center justify-between border-b border-[var(--color-border)] px-5 py-4 bg-[var(--color-panel-2)]">
         <div className="flex items-center gap-2">
-          <Radio className="pulse-dot text-amber-500" size={16} />
-          <h3 className="font-display text-xs font-semibold uppercase tracking-wider text-[var(--color-text)]">
-            Live Activity Feed
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500"></span>
+          </span>
+          <h3 className="font-display text-xs font-bold text-[var(--color-text)]">
+            Activity Log
           </h3>
         </div>
-        <span className="text-[10px] font-medium text-[var(--color-text-faint)]">
-          {activities.length} entries
+        <span className="text-[11px] font-semibold text-orange-500">
+          {activities.length} updates
         </span>
       </div>
 
       {/* List */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3.5">
+      <div className="flex-1 overflow-y-auto p-5 space-y-4">
         {activities.length === 0 ? (
-          <p className="py-8 text-center text-xs text-[var(--color-text-faint)]">No activity logs recorded yet.</p>
+          <p className="py-8 text-center text-xs text-[var(--color-text-faint)]">No activities logged yet.</p>
         ) : (
           activities.map((act) => {
-            const dotColor = ACTION_DOT[act.action] ?? 'bg-amber-500';
+            const dotColor = ACTION_DOT[act.action] ?? 'bg-orange-500';
             const initials = ROLE_INITIALS[act.role] ?? '??';
             const roleLabel = ROLE_LABEL[act.role] ?? act.role;
 
@@ -61,16 +63,16 @@ export function ActivityFeed() {
                     <span className="font-semibold text-[var(--color-text)]">
                       {act.actor}
                     </span>
-                    <span className="text-[10px] text-[var(--color-text-faint)] shrink-0">
+                    <span className="text-[10px] text-[var(--color-text-faint)] shrink-0 font-medium">
                       {timeAgo(act.timestamp)}
                     </span>
                   </div>
-                  <p className="text-[var(--color-text-muted)]">{act.detail}</p>
+                  <p className="text-[var(--color-text-muted)] leading-relaxed">{act.detail}</p>
                   <div className="flex items-center gap-1.5 pt-0.5">
-                    <span className="font-display rounded bg-[var(--color-panel-2)] px-1 py-0.5 text-[9px] font-semibold text-amber-500 border border-[var(--color-border)]">
+                    <span className="font-display rounded bg-[var(--color-panel-2)] px-1.5 py-0.5 text-[9px] font-semibold text-orange-500 border border-[var(--color-border)]">
                       {initials}
                     </span>
-                    <span className="text-[9px] text-[var(--color-text-faint)]">
+                    <span className="text-[10px] font-medium text-[var(--color-text-faint)]">
                       {roleLabel}
                     </span>
                   </div>
