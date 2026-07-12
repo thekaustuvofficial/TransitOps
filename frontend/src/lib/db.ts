@@ -175,25 +175,14 @@ class Database {
     if (this.useBackend && !skipBackend) {
       if (supabase) {
         try {
-          const [
-            resU,
-            resV,
-            resD,
-            resT,
-            resM,
-            resF,
-            resE,
-            resA
-          ] = await Promise.all([
-            supabase.from('users').upsert(this.snap.users),
-            supabase.from('vehicles').upsert(this.snap.vehicles),
-            supabase.from('drivers').upsert(this.snap.drivers),
-            supabase.from('trips').upsert(this.snap.trips),
-            supabase.from('maintenance').upsert(this.snap.maintenance),
-            supabase.from('fuel').upsert(this.snap.fuel),
-            supabase.from('expenses').upsert(this.snap.expenses),
-            supabase.from('activity').upsert(this.snap.activity)
-          ]);
+          const resU = await supabase.from('users').upsert(this.snap.users);
+          const resV = await supabase.from('vehicles').upsert(this.snap.vehicles);
+          const resD = await supabase.from('drivers').upsert(this.snap.drivers);
+          const resT = await supabase.from('trips').upsert(this.snap.trips);
+          const resM = await supabase.from('maintenance').upsert(this.snap.maintenance);
+          const resF = await supabase.from('fuel').upsert(this.snap.fuel);
+          const resE = await supabase.from('expenses').upsert(this.snap.expenses);
+          const resA = await supabase.from('activity').upsert(this.snap.activity);
 
           const errs = [
             resU.error, resV.error, resD.error, resT.error,
