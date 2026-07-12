@@ -331,7 +331,7 @@ function AppContent() {
         </div>
 
         {/* Sidebar Nav */}
-        <nav className="flex-1 space-y-0.5 px-3 py-4">
+        <nav className="flex-1 space-y-0.5 px-3 py-4 stagger-children">
           {NAVIGATION_ITEMS.map((item) => {
             // Dashboard is always visible; other items follow RBAC
             if (item.id !== 'dashboard') {
@@ -344,10 +344,10 @@ function AppContent() {
               <button
                 key={item.id}
                 onClick={() => navigateTo(item.id as Module)}
-                className={`flex w-full items-center gap-3 rounded-lg px-3.5 py-2.5 text-xs font-semibold transition-all duration-200 border ${
+                className={`animate-rise-in flex w-full items-center gap-3 rounded-lg px-3.5 py-2.5 text-xs font-semibold transition-all duration-200 border ${
                   isActive
                     ? 'bg-orange-500/10 text-orange-500 border-orange-500/10 shadow-xs'
-                    : 'text-[var(--color-text-muted)] hover:bg-[var(--color-panel-2)] hover:text-[var(--color-text)] border-transparent'
+                    : 'text-[var(--color-text-muted)] hover:bg-[var(--color-panel-2)] hover:text-[var(--color-text)] border-transparent hover:translate-x-0.5'
                 }`}
               >
                 {item.icon}
@@ -508,9 +508,9 @@ function AppContent() {
         <main className="flex-1 overflow-y-auto bg-[var(--color-bg)] p-6">
           {/* SPA Route Selector */}
           {showDashboard ? (
-            <Dashboard />
+            <div key="dashboard" className="animate-fade-in"><Dashboard /></div>
           ) : !isViewable ? (
-            <div className="flex h-full flex-col items-center justify-center text-center">
+            <div className="flex h-full flex-col items-center justify-center text-center animate-fade-in">
               <ShieldAlert className="mb-4 text-red-500" size={48} />
               <h2 className="font-display text-lg font-bold text-[var(--color-text)]">
                 Access Restricted
@@ -520,18 +520,20 @@ function AppContent() {
               </p>
             </div>
           ) : (
-            (() => {
-              switch (currentModule) {
-                case 'fleet': return <Fleet />;
-                case 'drivers': return <Drivers />;
-                case 'trips': return <Trips />;
-                case 'maintenance': return <Maintenance />;
-                case 'fuel_exp': return <FuelExpenses />;
-                case 'analytics': return <Analytics />;
-                case 'settings': return <Settings />;
-                default: return <Fleet />;
-              }
-            })()
+            <div key={currentModule} className="animate-fade-in">
+              {(() => {
+                switch (currentModule) {
+                  case 'fleet': return <Fleet />;
+                  case 'drivers': return <Drivers />;
+                  case 'trips': return <Trips />;
+                  case 'maintenance': return <Maintenance />;
+                  case 'fuel_exp': return <FuelExpenses />;
+                  case 'analytics': return <Analytics />;
+                  case 'settings': return <Settings />;
+                  default: return <Fleet />;
+                }
+              })()}
+            </div>
           )}
         </main>
       </div>

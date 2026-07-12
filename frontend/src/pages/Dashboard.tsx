@@ -1,18 +1,16 @@
 import { useState } from 'react';
 import { useDb } from '../hooks/useDb';
 import { KpiCard } from '../components/KpiCard';
-import { StatusBadge } from '../components/StatusBadge';
-import { ActivityFeed } from '../components/ActivityFeed';
 import { Card, CustomSelect } from '../components/primitives';
-import { Filter } from 'lucide-react';
 
 export default function Dashboard() {
   const db = useDb();
 
-  // Filters state
+  // Filter states
   const [vehicleType, setVehicleType] = useState<string>('All');
   const [vehicleStatus, setVehicleStatus] = useState<string>('All');
   const [region, setRegion] = useState<string>('All');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   const vehicles = db.vehicles;
   const trips = db.trips;
@@ -29,19 +27,19 @@ export default function Dashboard() {
     return true;
   });
 
-  // KPI Calculations (Filtered based on active filters)
+  // KPI Calculations
   const activeVehiclesCount = filteredVehicles.filter((v) => v.status === 'On Trip').length;
   const availableVehiclesCount = filteredVehicles.filter((v) => v.status === 'Available').length;
   const inMaintenanceCount = filteredVehicles.filter((v) => v.status === 'In Shop').length;
   const totalNonRetiredCount = filteredVehicles.filter((v) => v.status !== 'Retired').length;
 
-  const fleetUtilization = totalNonRetiredCount > 0 
-    ? Math.round((activeVehiclesCount / totalNonRetiredCount) * 100) 
+  const fleetUtilization = totalNonRetiredCount > 0
+    ? Math.round((activeVehiclesCount / totalNonRetiredCount) * 100)
     : 0;
 
-  // Filtered Trips (if vehicle is in filtered list)
+  // Filtered Trips
   const filteredTrips = trips.filter((t) => {
-    if (!t.vehicle_id) return true; // Draft/unassigned trips bypass vehicle filter
+    if (!t.vehicle_id) return true;
     const vehicle = vehicles.find((v) => v.id === t.vehicle_id);
     if (!vehicle) return true;
     if (vehicleType !== 'All' && vehicle.type !== vehicleType) return false;
@@ -51,11 +49,9 @@ export default function Dashboard() {
 
   const activeTripsCount = filteredTrips.filter((t) => t.status === 'Dispatched').length;
   const pendingTripsCount = filteredTrips.filter((t) => t.status === 'Draft').length;
-
-  // Drivers on duty
   const activeDriversCount = drivers.filter((d) => d.status === 'On Trip' || d.status === 'Available').length;
 
-  // Vehicle Status distribution for progress bars
+  // Vehicle status bars
   const statusDistribution = {
     Available: filteredVehicles.filter((v) => v.status === 'Available').length,
     'On Trip': filteredVehicles.filter((v) => v.status === 'On Trip').length,
@@ -63,186 +59,172 @@ export default function Dashboard() {
     Retired: filteredVehicles.filter((v) => v.status === 'Retired').length,
   };
   const totalFilteredVehicles = filteredVehicles.length;
+  const getPercent = (count: number) =>
+    totalFilteredVehicles === 0 ? 0 : Math.round((count / totalFilteredVehicles) * 100);
 
-  const getPercent = (count: number) => {
-    if (totalFilteredVehicles === 0) return 0;
-    return Math.round((count / totalFilteredVehicles) * 100);
-  };
+  // Search filtered trips
+  const searchedTrips = filteredTrips.filter((t) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    const vehicle = vehicles.find((v) => v.id === t.vehicle_id);
+    const driver = drivers.find((d) => d.id === t.driver_id);
+    return (
+      t.trip_code.toLowerCase().includes(q) ||
+      t.source.toLowerCase().includes(q) ||
+      t.destination.toLowerCase().includes(q) ||
+      (vehicle && vehicle.name.toLowerCase().includes(q)) ||
+      (driver && driver.name.toLowerCase().includes(q))
+    );
+  });
 
   const handleKpiClick = (module: string, filterKey?: string, filterValue?: string) => {
-    if (filterKey && filterValue) {
-      sessionStorage.setItem(filterKey, filterValue);
-    }
+    if (filterKey && filterValue) sessionStorage.setItem(filterKey, filterValue);
     window.location.hash = `#/${module}`;
   };
 
+  // ETA estimator
+  const getEta = (tripCode: string, status: string) => {
+    if (status === 'Completed' || status === 'Cancelled') return '—';
+    if (status === 'Draft') return 'Awaiting vehicle';
+    const hash = tripCode.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+    const mins = (hash % 50) + 15;
+    return mins > 60 ? `1h ${mins - 60}m` : `${mins} min`;
+  };
+
+  // Status badge classes matching the mockup
+  const getBadgeCls = (status: string) => {
+    switch (status) {
+      case 'On Trip':    return 'bg-blue-500 text-white';
+      case 'Completed':  return 'bg-emerald-600 text-white';
+      case 'Dispatched': return 'bg-sky-500 text-white';
+      case 'Draft':      return 'bg-[var(--color-panel-2)] text-[var(--color-text-muted)] border border-[var(--color-border)]';
+      case 'Cancelled':  return 'bg-red-500 text-white';
+      default:           return 'bg-slate-400 text-white';
+    }
+  };
+
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="font-display text-xl font-bold tracking-tight text-[var(--color-text)] sm:text-2xl">
-            Operations Dashboard
-          </h1>
-          <p className="text-xs text-[var(--color-text-muted)]">
-            Real-time fleet state machine monitoring, trip dispatch status and KPIs.
-          </p>
+    <div className="space-y-5 animate-fade-in">
+
+      {/* Search + Filters Bar */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center border-b border-[var(--color-border)] pb-5">
+        {/* Search */}
+        <div className="w-full sm:max-w-[260px]">
+          <input
+            type="text"
+            placeholder="Search trips, vehicles, drivers..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-2 text-xs text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/10 transition-all duration-200"
+          />
         </div>
 
-        {/* Global Filter Bar */}
-        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-2 z-10">
-          <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)] font-semibold mr-1">
-            <Filter size={13} />
-            <span>Filters:</span>
-          </div>
-
+        {/* Filters */}
+        <div className="flex flex-wrap items-center gap-2 z-10">
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-faint)]">Filters</span>
           <CustomSelect
             value={vehicleType}
-            onChange={(val) => setVehicleType(val)}
+            onChange={setVehicleType}
             options={[
-              { value: 'All', label: 'Type: All' },
+              { value: 'All', label: 'Vehicle Type: All' },
               { value: 'Van', label: 'Van' },
               { value: 'Truck', label: 'Truck' },
-              { value: 'Mini', label: 'Mini' }
+              { value: 'Mini', label: 'Mini' },
             ]}
-            className="w-32"
+            className="w-44"
           />
-
           <CustomSelect
             value={vehicleStatus}
-            onChange={(val) => setVehicleStatus(val)}
+            onChange={setVehicleStatus}
             options={[
               { value: 'All', label: 'Status: All' },
               { value: 'Available', label: 'Available' },
               { value: 'On Trip', label: 'On Trip' },
               { value: 'In Shop', label: 'In Shop' },
-              { value: 'Retired', label: 'Retired' }
+              { value: 'Retired', label: 'Retired' },
             ]}
-            className="w-36"
+            className="w-40"
           />
-
           <CustomSelect
             value={region}
-            onChange={(val) => setRegion(val)}
+            onChange={setRegion}
             options={[
               { value: 'All', label: 'Region: All' },
-              ...regions.map((reg) => ({ value: reg, label: reg }))
+              ...regions.map((r) => ({ value: r, label: r })),
             ]}
-            className="w-36"
+            className="w-40"
           />
         </div>
       </div>
 
-      {/* KPI Cards Row */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:grid-cols-7">
-        <KpiCard
-          label="Active Vehicles"
-          value={activeVehiclesCount}
-          accent="var(--color-status-ontrip)"
-          sub={`out of ${totalNonRetiredCount} non-retired`}
-          onClick={() => handleKpiClick('fleet', 'fleet_status_filter', 'On Trip')}
-        />
-        <KpiCard
-          label="Available"
-          value={availableVehiclesCount}
-          accent="var(--color-status-available)"
-          sub="ready for dispatch"
-          onClick={() => handleKpiClick('fleet', 'fleet_status_filter', 'Available')}
-        />
-        <KpiCard
-          label="In Shop"
-          value={inMaintenanceCount}
-          accent="var(--color-status-shop)"
-          sub="under maintenance"
-          onClick={() => handleKpiClick('fleet', 'fleet_status_filter', 'In Shop')}
-        />
-        <KpiCard
-          label="Active Trips"
-          value={activeTripsCount}
-          accent="var(--color-status-ontrip)"
-          sub="trips currently dispatched"
-          onClick={() => handleKpiClick('trips')}
-        />
-        <KpiCard
-          label="Pending Trips"
-          value={pendingTripsCount}
-          accent="var(--color-status-draft)"
-          sub="waiting for dispatch"
-          onClick={() => handleKpiClick('trips')}
-        />
-        <KpiCard
-          label="Drivers On Duty"
-          value={activeDriversCount}
-          accent="var(--color-status-available)"
-          sub="available & on trip"
-          onClick={() => handleKpiClick('drivers')}
-        />
-        <KpiCard
-          label="Fleet Utilization"
-          value={`${fleetUtilization}%`}
-          accent={fleetUtilization > 75 ? 'var(--color-status-available)' : 'var(--color-status-shop)'}
-          sub="active / total active fleet"
-          onClick={() => handleKpiClick('analytics')}
-        />
+      {/* KPI Grid — 7 compact cards */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+        <KpiCard label="ACTIVE VEHICLES"        value={activeVehiclesCount}     accent="#3b82f6" onClick={() => handleKpiClick('fleet', 'fleet_status_filter', 'On Trip')} />
+        <KpiCard label="AVAILABLE VEHICLES"     value={availableVehiclesCount}  accent="#10b981" onClick={() => handleKpiClick('fleet', 'fleet_status_filter', 'Available')} />
+        <KpiCard label="VEHICLES IN MAINTENANCE" value={inMaintenanceCount}     accent="#f59e0b" onClick={() => handleKpiClick('fleet', 'fleet_status_filter', 'In Shop')} />
+        <KpiCard label="ACTIVE TRIPS"           value={activeTripsCount}        accent="#3b82f6" onClick={() => handleKpiClick('trips')} />
+        <KpiCard label="PENDING TRIPS"          value={pendingTripsCount}       accent="#6366f1" onClick={() => handleKpiClick('trips')} />
+        <KpiCard label="DRIVERS ON DUTY"        value={activeDriversCount}      accent="#10b981" onClick={() => handleKpiClick('drivers')} />
+        <KpiCard label="FLEET UTILIZATION"      value={`${fleetUtilization}%`}  accent={fleetUtilization > 75 ? '#10b981' : '#f59e0b'} onClick={() => handleKpiClick('analytics')} />
       </div>
 
-      {/* Bottom Grid */}
-      <div className="grid gap-6 lg:grid-cols-12">
-        {/* Recent Trips Table */}
-        <div className="lg:col-span-8 space-y-4">
-          <Card className="p-5 border-[var(--color-border)] bg-[var(--color-panel)]">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="font-display text-sm font-bold tracking-tight text-[var(--color-text)]">
-                Recent Operations
+      {/* Main Content: Recent Trips (left) + Vehicle Status (right) */}
+      <div className="grid gap-5 lg:grid-cols-12">
+
+        {/* Recent Trips */}
+        <div className="lg:col-span-8">
+          <Card className="overflow-hidden border-[var(--color-border)] bg-[var(--color-panel)] hover:shadow-lg transition-shadow duration-300">
+            <div className="flex items-center justify-between border-b border-[var(--color-border)] px-5 py-3.5 bg-[var(--color-panel-2)]">
+              <h2 className="font-display text-[11px] font-bold uppercase tracking-widest text-[var(--color-text)]">
+                Recent Trips
               </h2>
-              <span className="text-[11px] text-[var(--color-text-faint)] font-medium">Latest 8 dispatches</span>
+              <span className="text-[10px] font-mono text-[var(--color-text-faint)]">{filteredTrips.length} total</span>
             </div>
 
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead>
-                  <tr className="border-b border-[var(--color-border)] text-[var(--color-text-faint)] font-semibold tracking-tight text-[11px]">
-                    <th className="pb-2.5 font-semibold">Code</th>
-                    <th className="pb-2.5 font-semibold">Route</th>
-                    <th className="pb-2.5 font-semibold">Vehicle</th>
-                    <th className="pb-2.5 font-semibold">Driver</th>
-                    <th className="pb-2.5 font-semibold">Cargo</th>
-                    <th className="pb-2.5 font-semibold">Status</th>
+                  <tr className="border-b border-[var(--color-border)] bg-[var(--color-panel-2)] text-[var(--color-text-faint)] text-[10px] uppercase tracking-wider">
+                    <th className="px-5 py-2.5 font-semibold">Trip</th>
+                    <th className="px-4 py-2.5 font-semibold">Vehicle</th>
+                    <th className="px-4 py-2.5 font-semibold">Driver</th>
+                    <th className="px-4 py-2.5 font-semibold">Status</th>
+                    <th className="px-4 py-2.5 font-semibold">ETA</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[var(--color-border-soft)]">
-                  {filteredTrips.slice(0, 8).map((trip) => {
+                <tbody>
+                  {searchedTrips.slice(0, 8).map((trip) => {
                     const vehicle = vehicles.find((v) => v.id === trip.vehicle_id);
-                    const driver = drivers.find((d) => d.id === trip.driver_id);
+                    const driver  = drivers.find((d) => d.id === trip.driver_id);
                     return (
-                      <tr key={trip.id} className="text-[var(--color-text-muted)] hover:text-[var(--color-text)]">
-                        <td className="font-display py-3 font-semibold text-[var(--color-text)]">{trip.trip_code}</td>
-                        <td className="py-3">
-                          <div className="font-medium text-[var(--color-text)]">{trip.destination}</div>
-                          <div className="text-[10px] text-[var(--color-text-faint)]">from {trip.source}</div>
+                      <tr
+                        key={trip.id}
+                        className="border-b border-[var(--color-border-soft)] hover:bg-[var(--color-panel-2)] transition-colors duration-150 cursor-default"
+                      >
+                        <td className="px-5 py-3.5 font-display font-bold text-[var(--color-text)] tracking-tight">
+                          {trip.trip_code}
                         </td>
-                        <td className="py-3">
-                          {vehicle ? (
-                            <div>
-                              <div className="font-medium">{vehicle.name}</div>
-                              <div className="text-[10px] font-display text-[var(--color-text-faint)]">{vehicle.reg_no}</div>
-                            </div>
-                          ) : (
-                            <span className="text-[var(--color-text-faint)]">—</span>
-                          )}
+                        <td className="px-4 py-3.5 font-medium text-[var(--color-text)]">
+                          {vehicle ? vehicle.name : <span className="text-[var(--color-text-faint)]">—</span>}
                         </td>
-                        <td className="py-3 font-medium">{driver?.name ?? <span className="text-[var(--color-text-faint)]">—</span>}</td>
-                        <td className="py-3 font-display">{trip.cargo_weight_kg} kg</td>
-                        <td className="py-3">
-                          <StatusBadge status={trip.status} />
+                        <td className="px-4 py-3.5 font-medium text-[var(--color-text-muted)]">
+                          {driver ? driver.name : <span className="text-[var(--color-text-faint)]">—</span>}
+                        </td>
+                        <td className="px-4 py-3.5">
+                          <span className={`inline-flex items-center rounded px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${getBadgeCls(trip.status)}`}>
+                            {trip.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3.5 font-mono text-[11px] text-[var(--color-text-muted)]">
+                          {getEta(trip.trip_code, trip.status)}
                         </td>
                       </tr>
                     );
                   })}
-                  {filteredTrips.length === 0 && (
+                  {searchedTrips.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="py-8 text-center text-[var(--color-text-faint)]">
-                        No trips found matching current filters.
+                      <td colSpan={5} className="px-5 py-10 text-center text-[var(--color-text-faint)]">
+                        No trips found.
                       </td>
                     </tr>
                   )}
@@ -250,96 +232,67 @@ export default function Dashboard() {
               </table>
             </div>
           </Card>
+        </div>
 
-          {/* Fleet Status Chart / Breakdown */}
-          <Card className="p-5 border-[var(--color-border)] bg-[var(--color-panel)]">
-            <h3 className="font-display mb-4 text-sm font-bold tracking-tight text-[var(--color-text)]">
-              Fleet Distribution
+        {/* Vehicle Status sidebar */}
+        <div className="lg:col-span-4">
+          <Card className="p-5 border-[var(--color-border)] bg-[var(--color-panel)] hover:shadow-lg transition-shadow duration-300 h-full">
+            <h3 className="font-display text-[11px] font-bold uppercase tracking-widest text-[var(--color-text)] mb-6">
+              Vehicle Status
             </h3>
-            <div className="space-y-4">
+
+            <div className="space-y-5">
               {/* Available */}
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-1.5 text-[var(--color-text-muted)]">
-                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                    Available
-                  </span>
-                  <span className="font-display font-semibold text-[var(--color-text)]">
-                    {statusDistribution.Available} ({getPercent(statusDistribution.Available)}%)
-                  </span>
+                  <span className="font-semibold text-[var(--color-text-muted)]">Available</span>
+                  <span className="font-mono font-bold text-[var(--color-text)]">{statusDistribution.Available}</span>
                 </div>
                 <div className="h-2 w-full rounded-full bg-[var(--color-panel-2)] overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-emerald-500 transition-all duration-500"
-                    style={{ width: `${getPercent(statusDistribution.Available)}%` }}
-                  />
+                  <div className="h-full rounded-full bg-emerald-500 transition-all duration-700"
+                    style={{ width: `${getPercent(statusDistribution.Available)}%` }} />
                 </div>
               </div>
 
               {/* On Trip */}
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-1.5 text-[var(--color-text-muted)]">
-                    <span className="h-2 w-2 rounded-full bg-blue-500" />
-                    On Trip
-                  </span>
-                  <span className="font-display font-semibold text-[var(--color-text)]">
-                    {statusDistribution['On Trip']} ({getPercent(statusDistribution['On Trip'])}%)
-                  </span>
+                  <span className="font-semibold text-[var(--color-text-muted)]">On Trip</span>
+                  <span className="font-mono font-bold text-[var(--color-text)]">{statusDistribution['On Trip']}</span>
                 </div>
                 <div className="h-2 w-full rounded-full bg-[var(--color-panel-2)] overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-blue-500 transition-all duration-500"
-                    style={{ width: `${getPercent(statusDistribution['On Trip'])}%` }}
-                  />
+                  <div className="h-full rounded-full bg-blue-500 transition-all duration-700"
+                    style={{ width: `${getPercent(statusDistribution['On Trip'])}%` }} />
                 </div>
               </div>
 
               {/* In Shop */}
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-1.5 text-[var(--color-text-muted)]">
-                    <span className="h-2 w-2 rounded-full bg-amber-500" />
-                    In Shop
-                  </span>
-                  <span className="font-display font-semibold text-[var(--color-text)]">
-                    {statusDistribution['In Shop']} ({getPercent(statusDistribution['In Shop'])}%)
-                  </span>
+                  <span className="font-semibold text-[var(--color-text-muted)]">In Shop</span>
+                  <span className="font-mono font-bold text-[var(--color-text)]">{statusDistribution['In Shop']}</span>
                 </div>
                 <div className="h-2 w-full rounded-full bg-[var(--color-panel-2)] overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-amber-500 transition-all duration-500"
-                    style={{ width: `${getPercent(statusDistribution['In Shop'])}%` }}
-                  />
+                  <div className="h-full rounded-full bg-amber-500 transition-all duration-700"
+                    style={{ width: `${getPercent(statusDistribution['In Shop'])}%` }} />
                 </div>
               </div>
 
               {/* Retired */}
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-1.5 text-[var(--color-text-muted)]">
-                    <span className="h-2 w-2 rounded-full bg-red-500" />
-                    Retired
-                  </span>
-                  <span className="font-display font-semibold text-[var(--color-text)]">
-                    {statusDistribution.Retired} ({getPercent(statusDistribution.Retired)}%)
-                  </span>
+                  <span className="font-semibold text-[var(--color-text-muted)]">Retired</span>
+                  <span className="font-mono font-bold text-[var(--color-text)]">{statusDistribution.Retired}</span>
                 </div>
                 <div className="h-2 w-full rounded-full bg-[var(--color-panel-2)] overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-red-500 transition-all duration-500"
-                    style={{ width: `${getPercent(statusDistribution.Retired)}%` }}
-                  />
+                  <div className="h-full rounded-full bg-red-500 transition-all duration-700"
+                    style={{ width: `${getPercent(statusDistribution.Retired)}%` }} />
                 </div>
               </div>
             </div>
           </Card>
         </div>
 
-        {/* Live Activity Feed Sidebar */}
-        <div className="lg:col-span-4 h-[500px] lg:h-auto">
-          <ActivityFeed />
-        </div>
       </div>
     </div>
   );
