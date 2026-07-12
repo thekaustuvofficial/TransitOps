@@ -88,14 +88,14 @@ class Database {
     if (supabase) {
       try {
         const [
-          { data: users, error: errU },
-          { data: vehicles, error: errV },
-          { data: drivers, error: errD },
-          { data: trips, error: errT },
-          { data: maintenance, error: errM },
-          { data: fuel, error: errF },
-          { data: expenses, error: errE },
-          { data: activity, error: errA }
+          resU,
+          resV,
+          resD,
+          resT,
+          resM,
+          resF,
+          resE,
+          resA
         ] = await Promise.all([
           supabase.from('users').select('*'),
           supabase.from('vehicles').select('*'),
@@ -107,9 +107,24 @@ class Database {
           supabase.from('activity').select('*')
         ]);
 
-        if (errU || errV || errD || errT || errM || errF || errE || errA) {
-          throw new Error("One or more tables could not be read from Supabase. Ensure tables are created.");
+        const errs = [
+          resU.error, resV.error, resD.error, resT.error,
+          resM.error, resF.error, resE.error, resA.error
+        ].filter((e): e is NonNullable<typeof e> => e !== null);
+
+        if (errs.length > 0) {
+          console.error("Supabase load errors:", errs);
+          throw new Error("One or more tables could not be read from Supabase: " + errs.map(e => e.message).join(", "));
         }
+
+        const users = resU.data;
+        const vehicles = resV.data;
+        const drivers = resD.data;
+        const trips = resT.data;
+        const maintenance = resM.data;
+        const fuel = resF.data;
+        const expenses = resE.data;
+        const activity = resA.data;
 
         if (!vehicles || vehicles.length === 0) {
           console.log("Supabase empty, seeding database...");
@@ -160,7 +175,16 @@ class Database {
     if (this.useBackend && !skipBackend) {
       if (supabase) {
         try {
-          await Promise.all([
+          const [
+            resU,
+            resV,
+            resD,
+            resT,
+            resM,
+            resF,
+            resE,
+            resA
+          ] = await Promise.all([
             supabase.from('users').upsert(this.snap.users),
             supabase.from('vehicles').upsert(this.snap.vehicles),
             supabase.from('drivers').upsert(this.snap.drivers),
@@ -170,6 +194,15 @@ class Database {
             supabase.from('expenses').upsert(this.snap.expenses),
             supabase.from('activity').upsert(this.snap.activity)
           ]);
+
+          const errs = [
+            resU.error, resV.error, resD.error, resT.error,
+            resM.error, resF.error, resE.error, resA.error
+          ].filter((e): e is NonNullable<typeof e> => e !== null);
+
+          if (errs.length > 0) {
+            console.error("Failed to synchronize state directly to Supabase. Errors:", errs);
+          }
         } catch (err) {
           console.error("Failed to synchronize state directly to Supabase", err);
         }
