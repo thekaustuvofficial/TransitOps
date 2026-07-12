@@ -1,4 +1,4 @@
-import { Vehicle, Driver } from '../types';
+import type { Vehicle, Driver } from '../types';
 
 export interface DispatchOrder {
   cargoWeightKg: number;

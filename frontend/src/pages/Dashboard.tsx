@@ -107,21 +107,21 @@ export default function Dashboard() {
     <div className="space-y-5 animate-fade-in">
 
       {/* Search + Filters Bar */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center border-b border-[var(--color-border)] pb-5">
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 border-b border-[var(--color-border)] pb-6">
         {/* Search */}
-        <div className="w-full sm:max-w-[260px]">
+        <div className="w-full xl:max-w-xs shrink-0">
           <input
             type="text"
             placeholder="Search trips, vehicles, drivers..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-2 text-xs text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/10 transition-all duration-200"
+            className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)] px-4 py-2.5 text-xs text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:border-orange-500 focus:outline-none focus:ring-4 focus:ring-orange-500/10 transition-all duration-200 shadow-sm"
           />
         </div>
 
         {/* Filters */}
-        <div className="flex flex-wrap items-center gap-2 z-10">
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-faint)]">Filters</span>
+        <div className="flex flex-nowrap items-center gap-3 overflow-x-auto hide-scrollbar w-full xl:w-auto pb-2 xl:pb-0">
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-faint)] shrink-0 px-2">Filters</span>
           <CustomSelect
             value={vehicleType}
             onChange={setVehicleType}
@@ -131,7 +131,7 @@ export default function Dashboard() {
               { value: 'Truck', label: 'Truck' },
               { value: 'Mini', label: 'Mini' },
             ]}
-            className="w-44"
+            className="w-40 shrink-0"
           />
           <CustomSelect
             value={vehicleStatus}
@@ -143,7 +143,7 @@ export default function Dashboard() {
               { value: 'In Shop', label: 'In Shop' },
               { value: 'Retired', label: 'Retired' },
             ]}
-            className="w-40"
+            className="w-40 shrink-0"
           />
           <CustomSelect
             value={region}
@@ -152,13 +152,13 @@ export default function Dashboard() {
               { value: 'All', label: 'Region: All' },
               ...regions.map((r) => ({ value: r, label: r })),
             ]}
-            className="w-40"
+            className="w-40 shrink-0"
           />
         </div>
       </div>
 
       {/* KPI Grid — 7 compact cards */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 stagger-children">
         <KpiCard label="ACTIVE VEHICLES"        value={activeVehiclesCount}     accent="#3b82f6" onClick={() => handleKpiClick('fleet', 'fleet_status_filter', 'On Trip')} />
         <KpiCard label="AVAILABLE VEHICLES"     value={availableVehiclesCount}  accent="#10b981" onClick={() => handleKpiClick('fleet', 'fleet_status_filter', 'Available')} />
         <KpiCard label="VEHICLES IN MAINTENANCE" value={inMaintenanceCount}     accent="#f59e0b" onClick={() => handleKpiClick('fleet', 'fleet_status_filter', 'In Shop')} />
@@ -173,23 +173,23 @@ export default function Dashboard() {
 
         {/* Recent Trips */}
         <div className="lg:col-span-8">
-          <Card className="overflow-hidden border-[var(--color-border)] bg-[var(--color-panel)] hover:shadow-lg transition-shadow duration-300">
-            <div className="flex items-center justify-between border-b border-[var(--color-border)] px-5 py-3.5 bg-[var(--color-panel-2)]">
-              <h2 className="font-display text-[11px] font-bold uppercase tracking-widest text-[var(--color-text)]">
+          <Card className="overflow-hidden border-[var(--color-border)] bg-[var(--color-panel)] hover:shadow-xl transition-shadow duration-300">
+            <div className="flex items-center justify-between border-b border-[var(--color-border)] px-6 py-4 bg-[var(--color-panel-2)]/50">
+              <h2 className="font-display text-xs font-bold uppercase tracking-widest text-[var(--color-text)]">
                 Recent Trips
               </h2>
               <span className="text-[10px] font-mono text-[var(--color-text-faint)]">{filteredTrips.length} total</span>
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
+              <table className="w-full text-left text-sm">
                 <thead>
-                  <tr className="border-b border-[var(--color-border)] bg-[var(--color-panel-2)] text-[var(--color-text-faint)] text-[10px] uppercase tracking-wider">
-                    <th className="px-5 py-2.5 font-semibold">Trip</th>
-                    <th className="px-4 py-2.5 font-semibold">Vehicle</th>
-                    <th className="px-4 py-2.5 font-semibold">Driver</th>
-                    <th className="px-4 py-2.5 font-semibold">Status</th>
-                    <th className="px-4 py-2.5 font-semibold">ETA</th>
+                  <tr className="border-b border-[var(--color-border)] bg-[var(--color-panel)] text-[var(--color-text-faint)] text-[10px] uppercase tracking-wider">
+                    <th className="px-6 py-3 font-semibold">Trip</th>
+                    <th className="px-6 py-3 font-semibold">Vehicle</th>
+                    <th className="px-6 py-3 font-semibold">Driver</th>
+                    <th className="px-6 py-3 font-semibold">Status</th>
+                    <th className="px-6 py-3 font-semibold text-right">ETA</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -199,23 +199,23 @@ export default function Dashboard() {
                     return (
                       <tr
                         key={trip.id}
-                        className="border-b border-[var(--color-border-soft)] hover:bg-[var(--color-panel-2)] transition-colors duration-150 cursor-default"
+                        className="border-b border-[var(--color-border-soft)] hover:bg-[var(--color-panel-2)] transition-colors duration-150 cursor-default group"
                       >
-                        <td className="px-5 py-3.5 font-display font-bold text-[var(--color-text)] tracking-tight">
+                        <td className="px-6 py-4 font-display font-bold text-[var(--color-text)] tracking-tight whitespace-nowrap">
                           {trip.trip_code}
                         </td>
-                        <td className="px-4 py-3.5 font-medium text-[var(--color-text)]">
+                        <td className="px-6 py-4 font-medium text-[var(--color-text)] whitespace-nowrap">
                           {vehicle ? vehicle.name : <span className="text-[var(--color-text-faint)]">—</span>}
                         </td>
-                        <td className="px-4 py-3.5 font-medium text-[var(--color-text-muted)]">
+                        <td className="px-6 py-4 font-medium text-[var(--color-text-muted)] whitespace-nowrap">
                           {driver ? driver.name : <span className="text-[var(--color-text-faint)]">—</span>}
                         </td>
-                        <td className="px-4 py-3.5">
-                          <span className={`inline-flex items-center rounded px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${getBadgeCls(trip.status)}`}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${getBadgeCls(trip.status)} shadow-sm`}>
                             {trip.status}
                           </span>
                         </td>
-                        <td className="px-4 py-3.5 font-mono text-[11px] text-[var(--color-text-muted)]">
+                        <td className="px-6 py-4 font-mono text-[11px] text-[var(--color-text-muted)] text-right whitespace-nowrap group-hover:text-[var(--color-text)] transition-colors">
                           {getEta(trip.trip_code, trip.status)}
                         </td>
                       </tr>
@@ -236,10 +236,15 @@ export default function Dashboard() {
 
         {/* Vehicle Status sidebar */}
         <div className="lg:col-span-4">
-          <Card className="p-5 border-[var(--color-border)] bg-[var(--color-panel)] hover:shadow-lg transition-shadow duration-300 h-full">
-            <h3 className="font-display text-[11px] font-bold uppercase tracking-widest text-[var(--color-text)] mb-6">
-              Vehicle Status
-            </h3>
+          <Card className="p-6 border-[var(--color-border)] bg-[var(--color-panel)] hover:shadow-xl transition-shadow duration-300 h-full flex flex-col">
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="font-display text-xs font-bold uppercase tracking-widest text-[var(--color-text)]">
+                Fleet Overview
+              </h3>
+              <span className="text-xs font-mono font-bold px-2 py-1 bg-[var(--color-panel-2)] rounded text-[var(--color-text-muted)]">
+                {totalFilteredVehicles} Total
+              </span>
+            </div>
 
             <div className="space-y-5">
               {/* Available */}

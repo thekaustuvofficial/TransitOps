@@ -18,38 +18,48 @@ export function KpiCard({
     <div
       onClick={onClick}
       className={cx(
-        'relative overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] px-4 py-4 animate-rise-in',
-        'transition-all duration-200 ease-out',
+        'relative overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] p-5 animate-rise-in',
+        'transition-all duration-300 ease-out flex flex-col justify-between h-full shadow-sm',
         onClick && 'cursor-pointer group',
-        onClick && 'hover:-translate-y-0.5 hover:shadow-lg hover:border-[var(--color-border)]',
+        onClick && 'hover:-translate-y-1 hover:shadow-xl hover:border-[var(--color-border-soft)]',
       )}
-      style={{
-        borderTopWidth: 2,
-        borderTopColor: accent,
-      }}
     >
-      {/* Subtle accent glow overlay on hover */}
+      {/* Dynamic gradient background */}
+      <div 
+        className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none transition-opacity duration-300 group-hover:opacity-[0.08] dark:group-hover:opacity-[0.12]"
+        style={{ background: `linear-gradient(135deg, ${accent} 0%, transparent 100%)` }}
+      />
+      
+      {/* Hover glow line */}
       {onClick && (
-        <div
-          className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl"
-          style={{ background: `radial-gradient(ellipse at 50% 0%, ${accent}10 0%, transparent 70%)` }}
+        <div 
+          className="absolute top-0 left-0 right-0 h-[3px] opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+          style={{ backgroundColor: accent, boxShadow: `0 0 12px ${accent}` }}
         />
       )}
+      
+      {/* Default top line */}
+      <div 
+        className="absolute top-0 left-0 right-0 h-[3px] transition-opacity duration-300 group-hover:opacity-0"
+        style={{ backgroundColor: accent }}
+      />
 
-      <p className="text-[9px] font-bold uppercase tracking-widest text-[var(--color-text-faint)] leading-none mb-2.5">
-        {label}
-      </p>
-      <p
-        className="text-2xl font-black tabular-nums tracking-tight font-display leading-none"
-        style={{ color: accent }}
-      >
-        {value}
-      </p>
-      {sub && (
-        <p className="mt-1.5 text-[10px] text-[var(--color-text-faint)] font-medium leading-tight">
-          {sub}
+      <div className="relative z-10">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)] mb-2 line-clamp-1 break-all" title={label}>
+          {label}
         </p>
-      )}
+        <p
+          className="text-3xl font-black tabular-nums tracking-tight font-display drop-shadow-sm"
+          style={{ color: accent }}
+        >
+          {value}
+        </p>
+        {sub && (
+          <p className="mt-2 text-xs text-[var(--color-text-faint)] font-medium">
+            {sub}
+          </p>
+        )}
+      </div>
     </div>
   );
 }
