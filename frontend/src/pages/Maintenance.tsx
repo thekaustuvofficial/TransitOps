@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { canEdit } from '../lib/permissions';
 import { StatusBadge } from '../components/StatusBadge';
-import { Button, Card, Input, Select, Field, Modal, Banner } from '../components/primitives';
+import { Button, Card, Input, Field, Modal, Banner, CustomSelect } from '../components/primitives';
 import { RuleViolation } from '../lib/db';
 import { fmtCurrency, fmtDate, fmtNumber } from '../lib/format';
 import { Wrench, Plus, Check } from 'lucide-react';
@@ -165,39 +165,40 @@ export default function Maintenance() {
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         title="Check-In Vehicle for Maintenance"
+        width="max-w-md"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           {errorMsg && <Banner tone="error">{errorMsg}</Banner>}
 
+          <Banner tone="info">
             <strong>State Transition Note:</strong> Creating an active maintenance log will instantly lock this vehicle, setting its status to <em>In Shop</em> and removing it from the active dispatch pool.
+          </Banner>
 
           <Field label="Select Available Vehicle" hint="Only Available vehicles (not Retired or On Trip) are eligible for maintenance check-in">
-            <Select
-              required
+            <CustomSelect
               value={vehicleId}
-              onChange={(e) => setVehicleId(e.target.value)}
-            >
-              <option value="">Select a Vehicle...</option>
-              {maintenanceEligibleVehicles.map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.name} ({v.reg_no}) — Odometer: {fmtNumber(v.odometer_km)} km
-                </option>
-              ))}
-            </Select>
+              onChange={setVehicleId}
+              placeholder="Select a Vehicle..."
+              options={maintenanceEligibleVehicles.map((v) => ({
+                value: v.id,
+                label: `${v.name} (${v.reg_no}) — Odometer: ${fmtNumber(v.odometer_km)} km`
+              }))}
+            />
           </Field>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Service Type">
-              <Select
+              <CustomSelect
                 value={serviceType}
-                onChange={(e) => setServiceType(e.target.value)}
-              >
-                <option value="Oil Change">Oil Change</option>
-                <option value="Engine Repair">Engine Repair</option>
-                <option value="Tyre Replace">Tyre Replace</option>
-                <option value="Brake Service">Brake Service</option>
-                <option value="Suspension Repair">Suspension Repair</option>
-              </Select>
+                onChange={setServiceType}
+                options={[
+                  { value: 'Oil Change', label: 'Oil Change' },
+                  { value: 'Engine Repair', label: 'Engine Repair' },
+                  { value: 'Tyre Replace', label: 'Tyre Replace' },
+                  { value: 'Brake Service', label: 'Brake Service' },
+                  { value: 'Suspension Repair', label: 'Suspension Repair' }
+                ]}
+              />
             </Field>
 
             <Field label="Service Cost (₹)">
@@ -207,6 +208,7 @@ export default function Maintenance() {
                 min={0}
                 value={cost}
                 onChange={(e) => setCost(Number(e.target.value))}
+                className="py-2 text-xs"
               />
             </Field>
           </div>
@@ -217,14 +219,15 @@ export default function Maintenance() {
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
+              className="py-2 text-xs"
             />
           </Field>
 
-          <div className="flex justify-end gap-2 pt-4 border-t border-[var(--color-border)]">
-            <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>
+          <div className="flex justify-end gap-2 pt-4 border-t border-[var(--color-border)] mt-6">
+            <Button type="button" variant="secondary" onClick={() => setModalOpen(false)} className="text-xs">
               Cancel
             </Button>
-            <Button type="submit" disabled={!vehicleId}>
+            <Button type="submit" disabled={!vehicleId} className="text-xs">
               <Wrench size={14} />
               Open Service Record
             </Button>
