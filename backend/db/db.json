@@ -5,7 +5,7 @@
       "name": "Raven K.",
       "email": "raven.k@transitops.in",
       "password": "demo1234",
-      "role": "driver"
+      "role": "dispatcher"
     },
     {
       "id": "usr_2",
@@ -33,7 +33,7 @@
       "name": "Vikram S.",
       "email": "vikram.s@transitops.in",
       "password": "demo1234",
-      "role": "driver"
+      "role": "dispatcher"
     },
     {
       "id": "usr_6",
@@ -47,7 +47,7 @@
       "name": "Rahul Verma",
       "email": "rahul.v@transitops.in",
       "password": "demo1234",
-      "role": "driver"
+      "role": "dispatcher"
     },
     {
       "id": "usr_8",
@@ -61,7 +61,7 @@
       "name": "Anil Kapoor",
       "email": "anil.k@transitops.in",
       "password": "demo1234",
-      "role": "driver"
+      "role": "dispatcher"
     },
     {
       "id": "usr_10",
@@ -75,7 +75,7 @@
       "name": "David John",
       "email": "david.j@transitops.in",
       "password": "demo1234",
-      "role": "driver"
+      "role": "dispatcher"
     },
     {
       "id": "usr_12",
@@ -549,7 +549,7 @@
       "id": "act_2",
       "timestamp": "2026-07-08T05:39:42.148Z",
       "actor": "Raven K.",
-      "role": "driver",
+      "role": "dispatcher",
       "action": "trip.completed",
       "detail": "TR002: Vatva Industrial Area \u2192 Sanand Warehouse \u2014 Van-05 & Alex back to Available",
       "ok": true
@@ -558,7 +558,7 @@
       "id": "act_3",
       "timestamp": "2026-07-11T05:39:42.148Z",
       "actor": "Raven K.",
-      "role": "driver",
+      "role": "dispatcher",
       "action": "trip.dispatched",
       "detail": "TR001: Truck-11 / Priya \u2014 cargo 3200/5000kg OK",
       "ok": true
