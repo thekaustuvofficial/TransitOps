@@ -23,7 +23,7 @@ import {
 //      same method names via the DataContext hook.
 // ---------------------------------------------------------------------------
 
-const STORAGE_KEY = 'transitops_db_v1';
+const STORAGE_KEY = 'transitops_db_v2';
 
 interface Snapshot {
   users: User[];

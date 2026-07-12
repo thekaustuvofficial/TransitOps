@@ -21,7 +21,7 @@ import { Field, Input, Button, cx } from './components/primitives';
 
 // Icon Imports
 import {
-  Truck, Users, Navigation, Wrench, Fuel, BarChart3, Settings as SettingsIcon, LogOut, ShieldAlert, Key, HelpCircle, Sun, Moon, LayoutDashboard, Menu, X as XIcon
+  Truck, Users, Navigation, Wrench, Fuel, BarChart3, Settings as SettingsIcon, LogOut, ShieldAlert, Key, HelpCircle, Sun, Moon, LayoutDashboard, Menu, X as XIcon, Send
 } from 'lucide-react';
 
 function AppContent() {
@@ -102,7 +102,7 @@ function AppContent() {
       // Determine starting tab based on role
       const roleStart: Record<Role, Module> = {
         fleet_manager: 'fleet',
-        driver: 'trips',
+        dispatcher: 'trips',
         safety_officer: 'drivers',
         financial_analyst: 'analytics',
       };
@@ -184,7 +184,7 @@ function AppContent() {
                   <span className="text-[10px] text-[var(--color-text-faint)]">Meera Shah</span>
                 </button>
                 <button onClick={() => handleQuickLogin('raven.k@transitops.in')} className="flex flex-col items-start rounded-lg border border-[var(--color-border)] bg-[var(--color-panel-2)] p-3 hover:border-orange-500/50 hover-glow transition-all active:scale-[0.98] text-left">
-                  <span className="font-semibold text-[var(--color-text)] font-display text-xs">Driver</span>
+                  <span className="font-semibold text-[var(--color-text)] font-display text-xs">Dispatcher</span>
                   <span className="text-[10px] text-[var(--color-text-faint)] mt-0.5">Raven K.</span>
                 </button>
                 <button onClick={() => handleQuickLogin('arjun.n@transitops.in')} className="flex flex-col items-start rounded-lg border border-[var(--color-border)] bg-[var(--color-panel-2)] p-3 hover:border-orange-500/50 hover-glow transition-all active:scale-[0.98] text-left">
@@ -289,7 +289,7 @@ function AppContent() {
               </div>
               <ul className="mt-1 space-y-1 pl-4 list-disc text-[10px] text-[var(--color-text-faint)]">
                 <li>Manager: meera.s@transitops.in / demo1234</li>
-                <li>Driver: raven.k@transitops.in / demo1234</li>
+                <li>Dispatcher: raven.k@transitops.in / demo1234</li>
                 <li>Safety: arjun.n@transitops.in / demo1234</li>
                 <li>Financial: priyanka.d@transitops.in / demo1234</li>
               </ul>
@@ -331,7 +331,7 @@ function AppContent() {
         </div>
 
         {/* Sidebar Nav */}
-        <nav className="flex-1 space-y-0.5 px-3 py-4">
+        <nav className="flex-1 space-y-0.5 px-3 py-4 stagger-children">
           {NAVIGATION_ITEMS.map((item) => {
             // Dashboard is always visible; other items follow RBAC
             if (item.id !== 'dashboard') {
@@ -344,10 +344,10 @@ function AppContent() {
               <button
                 key={item.id}
                 onClick={() => navigateTo(item.id as Module)}
-                className={`flex w-full items-center gap-3 rounded-lg px-3.5 py-2.5 text-xs font-semibold transition-all duration-200 border ${
+                className={`animate-rise-in flex w-full items-center gap-3 rounded-lg px-3.5 py-2.5 text-xs font-semibold transition-all duration-200 border ${
                   isActive
                     ? 'bg-orange-500/10 text-orange-500 border-orange-500/10 shadow-xs'
-                    : 'text-[var(--color-text-muted)] hover:bg-[var(--color-panel-2)] hover:text-[var(--color-text)] border-transparent'
+                    : 'text-[var(--color-text-muted)] hover:bg-[var(--color-panel-2)] hover:text-[var(--color-text)] border-transparent hover:translate-x-0.5'
                 }`}
               >
                 {item.icon}
@@ -457,12 +457,12 @@ function AppContent() {
             <div className={cx(
               "flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider",
               user.role === 'fleet_manager' ? "bg-orange-500/10 text-orange-500 border-orange-500/20" :
-              user.role === 'driver' ? "bg-blue-500/10 text-blue-500 border-blue-500/20" :
+              user.role === 'dispatcher' ? "bg-blue-500/10 text-blue-500 border-blue-500/20" :
               user.role === 'safety_officer' ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" :
               "bg-purple-500/10 text-purple-500 border-purple-500/20"
             )}>
               {user.role === 'fleet_manager' && <SettingsIcon size={12} />}
-              {user.role === 'driver' && <Truck size={12} />}
+              {user.role === 'dispatcher' && <Send size={12} />}
               {user.role === 'safety_officer' && <ShieldAlert size={12} />}
               {user.role === 'financial_analyst' && <BarChart3 size={12} />}
               {ROLE_LABEL[user.role]}
@@ -508,9 +508,9 @@ function AppContent() {
         <main className="flex-1 overflow-y-auto bg-[var(--color-bg)] p-6">
           {/* SPA Route Selector */}
           {showDashboard ? (
-            <Dashboard />
+            <div key="dashboard" className="animate-fade-in"><Dashboard /></div>
           ) : !isViewable ? (
-            <div className="flex h-full flex-col items-center justify-center text-center">
+            <div className="flex h-full flex-col items-center justify-center text-center animate-fade-in">
               <ShieldAlert className="mb-4 text-red-500" size={48} />
               <h2 className="font-display text-lg font-bold text-[var(--color-text)]">
                 Access Restricted
@@ -520,18 +520,20 @@ function AppContent() {
               </p>
             </div>
           ) : (
-            (() => {
-              switch (currentModule) {
-                case 'fleet': return <Fleet />;
-                case 'drivers': return <Drivers />;
-                case 'trips': return <Trips />;
-                case 'maintenance': return <Maintenance />;
-                case 'fuel_exp': return <FuelExpenses />;
-                case 'analytics': return <Analytics />;
-                case 'settings': return <Settings />;
-                default: return <Fleet />;
-              }
-            })()
+            <div key={currentModule} className="animate-fade-in">
+              {(() => {
+                switch (currentModule) {
+                  case 'fleet': return <Fleet />;
+                  case 'drivers': return <Drivers />;
+                  case 'trips': return <Trips />;
+                  case 'maintenance': return <Maintenance />;
+                  case 'fuel_exp': return <FuelExpenses />;
+                  case 'analytics': return <Analytics />;
+                  case 'settings': return <Settings />;
+                  default: return <Fleet />;
+                }
+              })()}
+            </div>
           )}
         </main>
       </div>

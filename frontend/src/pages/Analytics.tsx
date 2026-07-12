@@ -118,7 +118,10 @@ export default function Analytics() {
   const handleExportPDF = () => {
     try {
       const printWindow = window.open('', '_blank');
-      if (!printWindow) { toast.push('error', 'Popup blocked. Please allow popups for PDF export.'); return; }
+      if (!printWindow) {
+        toast.push('error', 'Popup blocked. Please allow popups for PDF export.');
+        return;
+      }
 
       const rows = fleetCostsBreakdown.map((item) =>
         `<tr>
@@ -133,16 +136,15 @@ export default function Analytics() {
         </tr>`
       ).join('');
 
-      const html = `
+      printWindow.document.write(`
         <!DOCTYPE html><html><head><title>TransitOps Fleet ROI Report</title>
         <style>
           body { font-family: 'Inter', Arial, sans-serif; padding: 40px; color: #1e293b; }
-      `;
-      printWindow.document.documentElement.innerHTML = html;
+          h1 { font-size: 20px; margin-bottom: 4px; }
+          p.sub { font-size: 12px; color: #64748b; margin-bottom: 24px; }
           table { width: 100%; border-collapse: collapse; font-size: 11px; }
           th { background: #f1f5f9; padding: 8px 12px; text-align: left; border-bottom: 2px solid #e2e8f0; font-weight: 600; }
-    } catch (error) {
-      console.error(error);
+          td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; }
           .kpi-row { display: flex; gap: 16px; margin-bottom: 24px; }
           .kpi { flex: 1; padding: 16px; border: 1px solid #e2e8f0; border-radius: 8px; }
           .kpi-label { font-size: 10px; text-transform: uppercase; color: #64748b; font-weight: 600; letter-spacing: 0.5px; }
@@ -169,12 +171,13 @@ export default function Analytics() {
       setTimeout(() => { printWindow.print(); }, 300);
       toast.push('success', 'PDF export opened in print dialog.');
     } catch (error) {
+      console.error(error);
       toast.push('error', 'Failed to generate PDF export.');
     }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-rise-in">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>

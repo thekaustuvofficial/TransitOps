@@ -2,9 +2,33 @@
   <img src="./assets/logo.png" alt="TransitOps Logo" width="800"/>
 </p>
 
+<p align="center">
+  <img src="https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black" alt="React"/>
+  <img src="https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=white" alt="Vite"/>
+  <img src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white" alt="TypeScript"/>
+  <img src="https://img.shields.io/badge/TailwindCSS-4-06B6D4?logo=tailwindcss&logoColor=white" alt="Tailwind CSS"/>
+  <img src="https://img.shields.io/badge/Express-Backend-000000?logo=express&logoColor=white" alt="Express"/>
+  <img src="https://img.shields.io/badge/PostgreSQL-Schema-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL"/>
+  <img src="https://img.shields.io/badge/Supabase-Auth-3ECF8E?logo=supabase&logoColor=white" alt="Supabase"/>
+  <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"/>
+</p>
+
 # TransitOps: Smart Transport Operations Platform
 
 *An end-to-end transport operations platform built to digitize and streamline fleet management, routing, and expense tracking.*
+
+---
+
+## Table of Contents
+- [Workspace Structure](#workspace-structure)
+- [Overview](#overview)
+- [User Roles (RBAC)](#user-roles-rbac)
+- [Smart Business Rules (Automated)](#smart-business-rules-automated)
+- [Key Features Implemented](#key-features-implemented)
+- [System Architecture](#system-architecture)
+- [Screenshots](#screenshots)
+- [Getting Started](#getting-started)
+- [License](#license)
 
 ---
 
@@ -98,6 +122,57 @@ To prevent operational mistakes, TransitOps implements a state machine governed 
 
 ---
 
+---
+
+## Automated Dispatch Recommendation Engine
+
+<p align="center">
+  <img src="./assets/dispatch-automation-framework.png" alt="Automated Dispatch System Framework" width="800"/>
+</p>
+
+<details>
+<summary><strong>How the Dispatch Engine Works</strong></summary>
+
+The dispatch engine connects the Drivers Directory and Trucks Data Directory to a logic layer that recommends optimal driver + truck pairings for every new order, without manual matching.
+
+**1. Human Resource Layer — Drivers Directory**
+Tracks identity, compliance (license expiry), live location/status (Available, On Trip, Off Duty, Suspended), and operational metrics (hours worked today, trips this month, charges).
+
+**2. Asset Layer — Trucks Data Directory**
+Segments the fleet into Long Haul, Short Trucks, and Small Carriers, each with identification, compliance (insurance expiry), and maintenance state (Available, On Trip, In Shop, Service Needed).
+
+**3. Logic Layer — Automation Dispatch Network**
+- **Phase A – Order Ingestion:** Captures cargo weight, destination, and estimated trip duration.
+- **Phase B – Hard-Stop Filter:** Eliminates trucks that are unavailable, need service, or have expired insurance; eliminates drivers who are unavailable, unlicensed, or would exceed daily hour limits.
+- **Phase C – Smart Matchmaker:** Matches remaining eligible resources by cargo-capacity fit, driver proximity to pickup, and combined cost of driver + truck charges.
+- **Phase D – Final Output:** Presents 1–3 ranked driver + truck combinations with a one-click Dispatch action that updates all statuses instantly.
+
+</details>
+
+---
+
+## Screenshots
+
+<p align="center">
+  <img src="./assets/dashboard.png" alt="Dashboard Screenshot" width="800"/>
+  <br/>
+  <em>Live Dashboard & KPIs</em>
+</p>
+
+<p align="center">
+  <img src="./assets/dispatch.png" alt="Dispatch Screenshot" width="800"/>
+  <br/>
+  <em>Smart Dispatch Assist</em>
+</p>
+
+<p align="center">
+  <img src="./assets/fleet.png" alt="Fleet Registry Screenshot" width="800"/>
+  <br/>
+  <em>Fleet Registry & Maintenance Tracking</em>
+</p>
+
+---
+
 ## Getting Started
 
 ### Prerequisites
@@ -128,6 +203,11 @@ To prevent operational mistakes, TransitOps implements a state machine governed 
 
 ---
 
+## License
+This project is licensed under the **MIT License**. See the [LICENSE](./LICENSE) file for details.
+
+---
+
 ## Future Scalability Scope
 
 TransitOps is currently a focused demo that demonstrates core fleet and dispatch workflows. Below is a plain-language roadmap describing how the project can evolve into a production-ready, multi-tenant SaaS product.
@@ -140,3 +220,4 @@ TransitOps is currently a focused demo that demonstrates core fleet and dispatch
 - Enterprise Features & Integrations: add MFA/SSO, localization, scheduled reporting, webhooks, and reseller/partner workflows.
 
 This summary is intentionally concise — a detailed roadmap file (`FUTURE_SCALABILITY.md`) has been added to the repository with the same plain-language explanation for stakeholders and contributors.
+
