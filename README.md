@@ -121,6 +121,35 @@ To prevent operational mistakes, TransitOps implements a state machine governed 
 
 ---
 
+---
+
+## Automated Dispatch Recommendation Engine
+
+<p align="center">
+  <img src="./assets/dispatch-automation-framework.png" alt="Automated Dispatch System Framework" width="800"/>
+</p>
+
+<details>
+<summary><strong>How the Dispatch Engine Works</strong></summary>
+
+The dispatch engine connects the Drivers Directory and Trucks Data Directory to a logic layer that recommends optimal driver + truck pairings for every new order, without manual matching.
+
+**1. Human Resource Layer — Drivers Directory**
+Tracks identity, compliance (license expiry), live location/status (Available, On Trip, Off Duty, Suspended), and operational metrics (hours worked today, trips this month, charges).
+
+**2. Asset Layer — Trucks Data Directory**
+Segments the fleet into Long Haul, Short Trucks, and Small Carriers, each with identification, compliance (insurance expiry), and maintenance state (Available, On Trip, In Shop, Service Needed).
+
+**3. Logic Layer — Automation Dispatch Network**
+- **Phase A – Order Ingestion:** Captures cargo weight, destination, and estimated trip duration.
+- **Phase B – Hard-Stop Filter:** Eliminates trucks that are unavailable, need service, or have expired insurance; eliminates drivers who are unavailable, unlicensed, or would exceed daily hour limits.
+- **Phase C – Smart Matchmaker:** Matches remaining eligible resources by cargo-capacity fit, driver proximity to pickup, and combined cost of driver + truck charges.
+- **Phase D – Final Output:** Presents 1–3 ranked driver + truck combinations with a one-click Dispatch action that updates all statuses instantly.
+
+</details>
+
+---
+
 ## Screenshots
 
 <p align="center">
