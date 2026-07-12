@@ -34,6 +34,11 @@ const pool = connectionString
       port: parseInt(process.env.DB_PORT || '5432'),
     });
 
+// Handle pool connection errors gracefully to prevent process crash
+pool.on('error', (err) => {
+  console.error('Unexpected database pool error:', err.message);
+});
+
 // API endpoint to fetch all database records
 app.get('/api/data', async (req, res) => {
   const isDemoMode = req.query.demo === 'true';
@@ -197,8 +202,9 @@ app.post('/api/dispatch/recommend', async (req, res) => {
 app.post('/api/save', async (req, res) => {
   const { users, vehicles, drivers, trips, maintenance, fuel, expenses, activity } = req.body;
 
-  const client = await pool.connect();
+  let client;
   try {
+    client = await pool.connect();
     await client.query('BEGIN');
 
     // 1. Users
@@ -386,18 +392,21 @@ app.post('/api/save', async (req, res) => {
     await client.query('COMMIT');
     res.json({ success: true });
   } catch (err) {
-    await client.query('ROLLBACK');
+    if (client) {
+      try { await client.query('ROLLBACK'); } catch (rbErr) { console.error("Rollback failed:", rbErr); }
+    }
     console.error("Database save transaction error:", err);
     res.status(500).json({ error: err.message });
   } finally {
-    client.release();
+    if (client) client.release();
   }
 });
 
 // Database reseed and reset
 app.post('/api/reset', async (req, res) => {
-  const client = await pool.connect();
+  let client;
   try {
+    client = await pool.connect();
     await client.query('BEGIN');
     
     await client.query('TRUNCATE expenses, fuel, maintenance, trips, drivers, vehicles, users, activity CASCADE');
@@ -478,11 +487,13 @@ app.post('/api/reset', async (req, res) => {
     await client.query('COMMIT');
     res.json({ success: true, message: "Database reset and reseeded successfully" });
   } catch (err) {
-    await client.query('ROLLBACK');
+    if (client) {
+      try { await client.query('ROLLBACK'); } catch (rbErr) { console.error("Rollback failed:", rbErr); }
+    }
     console.error("Database reset/reseed error:", err);
     res.status(500).json({ error: err.message });
   } finally {
-    client.release();
+    if (client) client.release();
   }
 });
 
