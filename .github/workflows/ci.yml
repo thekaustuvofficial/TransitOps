@@ -13,9 +13,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
           submodules: false
-          persist-credentials: true
+          persist-credentials: false
+          clean: false
       - name: Use Node.js 22
         uses: actions/setup-node@v4
         with:
@@ -46,9 +47,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
           submodules: false
-          persist-credentials: true
+          persist-credentials: false
+          clean: false
       - name: Use Node.js 22
         uses: actions/setup-node@v4
         with:
@@ -82,9 +84,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
           submodules: false
-          persist-credentials: true
+          persist-credentials: false
+          clean: false
       - name: Use Node.js 22
         uses: actions/setup-node@v4
         with:
