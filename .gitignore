@@ -1,6 +1,7 @@
 # Dependencies
 node_modules/
 frontend/node_modules/
+backend/odoo-venv
 
 # Production builds
 dist/
