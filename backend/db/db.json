@@ -1,0 +1,576 @@
+{
+  "users": [
+    {
+      "id": "usr_1",
+      "name": "Raven K.",
+      "email": "raven.k@transitops.in",
+      "password": "demo1234",
+      "role": "driver"
+    },
+    {
+      "id": "usr_2",
+      "name": "Meera Shah",
+      "email": "meera.s@transitops.in",
+      "password": "demo1234",
+      "role": "fleet_manager"
+    },
+    {
+      "id": "usr_3",
+      "name": "Arjun Nair",
+      "email": "arjun.n@transitops.in",
+      "password": "demo1234",
+      "role": "safety_officer"
+    },
+    {
+      "id": "usr_4",
+      "name": "Priyanka Desai",
+      "email": "priyanka.d@transitops.in",
+      "password": "demo1234",
+      "role": "financial_analyst"
+    },
+    {
+      "id": "usr_5",
+      "name": "Vikram S.",
+      "email": "vikram.s@transitops.in",
+      "password": "demo1234",
+      "role": "driver"
+    },
+    {
+      "id": "usr_6",
+      "name": "Neha Gupta",
+      "email": "neha.g@transitops.in",
+      "password": "demo1234",
+      "role": "fleet_manager"
+    },
+    {
+      "id": "usr_7",
+      "name": "Rahul Verma",
+      "email": "rahul.v@transitops.in",
+      "password": "demo1234",
+      "role": "driver"
+    },
+    {
+      "id": "usr_8",
+      "name": "Kavita Reddy",
+      "email": "kavita.r@transitops.in",
+      "password": "demo1234",
+      "role": "safety_officer"
+    },
+    {
+      "id": "usr_9",
+      "name": "Anil Kapoor",
+      "email": "anil.k@transitops.in",
+      "password": "demo1234",
+      "role": "driver"
+    },
+    {
+      "id": "usr_10",
+      "name": "Sita Ram",
+      "email": "sita.r@transitops.in",
+      "password": "demo1234",
+      "role": "financial_analyst"
+    },
+    {
+      "id": "usr_11",
+      "name": "David John",
+      "email": "david.j@transitops.in",
+      "password": "demo1234",
+      "role": "driver"
+    },
+    {
+      "id": "usr_12",
+      "name": "Rohan Das",
+      "email": "rohan.d@transitops.in",
+      "password": "demo1234",
+      "role": "fleet_manager"
+    }
+  ],
+  "vehicles": [
+    {
+      "id": "veh_1",
+      "reg_no": "GJ01AB4521",
+      "name": "VAN-05",
+      "type": "Van",
+      "max_capacity_kg": 500,
+      "odometer_km": 74000,
+      "acquisition_cost": 620000,
+      "insurance_expiry": "2027-08-06",
+      "status": "Available",
+      "last_service_odometer_km": 70000,
+      "region": "Ahmedabad",
+      "current_location": "Ahmedabad Depot"
+    },
+    {
+      "id": "veh_2",
+      "reg_no": "GJ01AB9987",
+      "name": "TRUCK-11",
+      "type": "Truck",
+      "max_capacity_kg": 5000,
+      "odometer_km": 182000,
+      "acquisition_cost": 2450000,
+      "insurance_expiry": "2027-01-08",
+      "status": "On Trip",
+      "last_service_odometer_km": 175000,
+      "region": "Ahmedabad",
+      "current_location": "Ahmedabad Hub"
+    },
+    {
+      "id": "veh_3",
+      "reg_no": "GJ01AB1120",
+      "name": "MINI-03",
+      "type": "Mini",
+      "max_capacity_kg": 1000,
+      "odometer_km": 66000,
+      "acquisition_cost": 410000,
+      "insurance_expiry": "2026-09-10",
+      "status": "In Shop",
+      "last_service_odometer_km": 60000,
+      "region": "Gandhinagar",
+      "current_location": "Gandhinagar Workshop"
+    },
+    {
+      "id": "veh_4",
+      "reg_no": "GJ01AB0087",
+      "name": "VAN-09",
+      "type": "Van",
+      "max_capacity_kg": 750,
+      "odometer_km": 241900,
+      "acquisition_cost": 590000,
+      "insurance_expiry": "2026-06-27",
+      "status": "Retired",
+      "last_service_odometer_km": 240000,
+      "region": "Vatva",
+      "current_location": "Vatva Yard"
+    },
+    {
+      "id": "veh_5",
+      "reg_no": "GJ01AB2244",
+      "name": "TRUCK-04",
+      "type": "Truck",
+      "max_capacity_kg": 4500,
+      "odometer_km": 98000,
+      "acquisition_cost": 2100000,
+      "insurance_expiry": "2027-03-19",
+      "status": "Available",
+      "last_service_odometer_km": 90000,
+      "region": "Sanand",
+      "current_location": "Sanand Warehouse"
+    },
+    {
+      "id": "veh_6",
+      "reg_no": "GJ01AB3344",
+      "name": "VAN-06",
+      "type": "Van",
+      "max_capacity_kg": 550,
+      "odometer_km": 45000,
+      "acquisition_cost": 600000,
+      "insurance_expiry": "2027-10-12",
+      "status": "Available",
+      "last_service_odometer_km": 40000,
+      "region": "Ahmedabad",
+      "current_location": "Ahmedabad Hub"
+    },
+    {
+      "id": "veh_7",
+      "reg_no": "GJ01AB5566",
+      "name": "TRUCK-12",
+      "type": "Truck",
+      "max_capacity_kg": 6000,
+      "odometer_km": 120000,
+      "acquisition_cost": 2600000,
+      "insurance_expiry": "2026-11-05",
+      "status": "Available",
+      "last_service_odometer_km": 115000,
+      "region": "Surat",
+      "current_location": "Surat Depot"
+    },
+    {
+      "id": "veh_8",
+      "reg_no": "GJ01AB7788",
+      "name": "MINI-04",
+      "type": "Mini",
+      "max_capacity_kg": 1200,
+      "odometer_km": 30000,
+      "acquisition_cost": 450000,
+      "insurance_expiry": "2028-02-15",
+      "status": "Available",
+      "last_service_odometer_km": 28000,
+      "region": "Vadodara",
+      "current_location": "Vadodara Workshop"
+    },
+    {
+      "id": "veh_9",
+      "reg_no": "GJ01AB9900",
+      "name": "VAN-07",
+      "type": "Van",
+      "max_capacity_kg": 800,
+      "odometer_km": 85000,
+      "acquisition_cost": 650000,
+      "insurance_expiry": "2027-04-20",
+      "status": "On Trip",
+      "last_service_odometer_km": 80000,
+      "region": "Rajkot",
+      "current_location": "Rajkot Yard"
+    },
+    {
+      "id": "veh_10",
+      "reg_no": "GJ01AB1234",
+      "name": "TRUCK-13",
+      "type": "Truck",
+      "max_capacity_kg": 7000,
+      "odometer_km": 200000,
+      "acquisition_cost": 3000000,
+      "insurance_expiry": "2026-05-10",
+      "status": "In Shop",
+      "last_service_odometer_km": 195000,
+      "region": "Bhavnagar",
+      "current_location": "Bhavnagar Depot"
+    },
+    {
+      "id": "veh_11",
+      "reg_no": "GJ01AB5678",
+      "name": "MINI-05",
+      "type": "Mini",
+      "max_capacity_kg": 900,
+      "odometer_km": 50000,
+      "acquisition_cost": 400000,
+      "insurance_expiry": "2027-09-30",
+      "status": "Available",
+      "last_service_odometer_km": 48000,
+      "region": "Jamnagar",
+      "current_location": "Jamnagar Hub"
+    },
+    {
+      "id": "veh_12",
+      "reg_no": "GJ01AB9012",
+      "name": "VAN-08",
+      "type": "Van",
+      "max_capacity_kg": 600,
+      "odometer_km": 110000,
+      "acquisition_cost": 550000,
+      "insurance_expiry": "2026-12-01",
+      "status": "Available",
+      "last_service_odometer_km": 105000,
+      "region": "Anand",
+      "current_location": "Anand Yard"
+    },
+    {
+      "id": "veh_13",
+      "reg_no": "GJ01AB3456",
+      "name": "TRUCK-14",
+      "type": "Truck",
+      "max_capacity_kg": 5500,
+      "odometer_km": 160000,
+      "acquisition_cost": 2300000,
+      "insurance_expiry": "2027-07-25",
+      "status": "Available",
+      "last_service_odometer_km": 155000,
+      "region": "Morbi",
+      "current_location": "Morbi Warehouse"
+    }
+  ],
+  "drivers": [
+    {
+      "id": "drv_1",
+      "name": "Alex Fernandes",
+      "license_no": "DL-88213",
+      "license_category": "LMV",
+      "license_expiry": "2028-01-03",
+      "contact": "98765xxxxx",
+      "safety_score": 96,
+      "status": "Available",
+      "current_location": "Ahmedabad Hub"
+    },
+    {
+      "id": "drv_2",
+      "name": "John Mathew",
+      "license_no": "DL-44120",
+      "license_category": "HMV",
+      "license_expiry": "2026-04-13",
+      "contact": "98220xxxxx",
+      "safety_score": 81,
+      "status": "Suspended",
+      "current_location": "Home Base"
+    },
+    {
+      "id": "drv_3",
+      "name": "Priya Patel",
+      "license_no": "DL-77031",
+      "license_category": "LMV",
+      "license_expiry": "2026-08-11",
+      "contact": "99110xxxxx",
+      "safety_score": 99,
+      "status": "On Trip",
+      "current_location": "Gandhinagar Depot"
+    },
+    {
+      "id": "drv_4",
+      "name": "Suresh Kumar",
+      "license_no": "DL-90045",
+      "license_category": "HMV",
+      "license_expiry": "2027-01-28",
+      "contact": "97440xxxxx",
+      "safety_score": 88,
+      "status": "Available",
+      "current_location": "Sanand Warehouse"
+    },
+    {
+      "id": "drv_5",
+      "name": "Vikram S.",
+      "license_no": "DL-11223",
+      "license_category": "LMV",
+      "license_expiry": "2027-05-12",
+      "contact": "98112xxxxx",
+      "safety_score": 92,
+      "status": "Available",
+      "current_location": "Ahmedabad Hub"
+    },
+    {
+      "id": "drv_6",
+      "name": "Rahul Verma",
+      "license_no": "DL-33445",
+      "license_category": "HMV",
+      "license_expiry": "2026-11-20",
+      "contact": "98334xxxxx",
+      "safety_score": 85,
+      "status": "Available",
+      "current_location": "Surat Depot"
+    },
+    {
+      "id": "drv_7",
+      "name": "Anil Kapoor",
+      "license_no": "DL-55667",
+      "license_category": "LMV",
+      "license_expiry": "2028-08-15",
+      "contact": "98556xxxxx",
+      "safety_score": 98,
+      "status": "Available",
+      "current_location": "Vadodara Workshop"
+    },
+    {
+      "id": "drv_8",
+      "name": "David John",
+      "license_no": "DL-77889",
+      "license_category": "HMV",
+      "license_expiry": "2027-02-10",
+      "contact": "98778xxxxx",
+      "safety_score": 79,
+      "status": "On Trip",
+      "current_location": "Rajkot Yard"
+    },
+    {
+      "id": "drv_9",
+      "name": "Manish Patel",
+      "license_no": "DL-99001",
+      "license_category": "LMV",
+      "license_expiry": "2029-01-05",
+      "contact": "98990xxxxx",
+      "safety_score": 95,
+      "status": "Available",
+      "current_location": "Bhavnagar Depot"
+    },
+    {
+      "id": "drv_10",
+      "name": "Gaurav Singh",
+      "license_no": "DL-22334",
+      "license_category": "HMV",
+      "license_expiry": "2026-06-30",
+      "contact": "98223xxxxx",
+      "safety_score": 88,
+      "status": "Suspended",
+      "current_location": "Jamnagar Hub"
+    },
+    {
+      "id": "drv_11",
+      "name": "Karan Johar",
+      "license_no": "DL-44556",
+      "license_category": "LMV",
+      "license_expiry": "2027-12-25",
+      "contact": "98445xxxxx",
+      "safety_score": 91,
+      "status": "Available",
+      "current_location": "Anand Yard"
+    },
+    {
+      "id": "drv_12",
+      "name": "Vivek Oberoi",
+      "license_no": "DL-66778",
+      "license_category": "HMV",
+      "license_expiry": "2028-04-18",
+      "contact": "98667xxxxx",
+      "safety_score": 84,
+      "status": "Available",
+      "current_location": "Morbi Warehouse"
+    }
+  ],
+  "trips": [
+    {
+      "id": "trp_1",
+      "trip_code": "TR001",
+      "source": "Gandhinagar Depot",
+      "destination": "Ahmedabad Hub",
+      "vehicle_id": "veh_2",
+      "driver_id": "drv_3",
+      "cargo_weight_kg": 3200,
+      "planned_distance_km": 38,
+      "status": "Dispatched",
+      "revenue": 18000,
+      "final_odometer_km": null,
+      "fuel_consumed_l": null,
+      "created_at": "2026-07-11T05:39:42.148Z",
+      "dispatched_at": "2026-07-11T05:39:42.148Z",
+      "completed_at": null
+    },
+    {
+      "id": "trp_2",
+      "trip_code": "TR002",
+      "source": "Vatva Industrial Area",
+      "destination": "Sanand Warehouse",
+      "vehicle_id": "veh_1",
+      "driver_id": "drv_1",
+      "cargo_weight_kg": 410,
+      "planned_distance_km": 22,
+      "status": "Completed",
+      "revenue": 9200,
+      "final_odometer_km": 74210,
+      "fuel_consumed_l": 26,
+      "created_at": "2026-07-08T05:39:42.148Z",
+      "dispatched_at": "2026-07-08T05:39:42.148Z",
+      "completed_at": "2026-07-09T05:39:42.148Z"
+    },
+    {
+      "id": "trp_3",
+      "trip_code": "TR003",
+      "source": "Mansa",
+      "destination": "Kalol Depot",
+      "vehicle_id": null,
+      "driver_id": null,
+      "cargo_weight_kg": 600,
+      "planned_distance_km": 45,
+      "status": "Cancelled",
+      "revenue": 0,
+      "final_odometer_km": null,
+      "fuel_consumed_l": null,
+      "created_at": "2026-07-10T05:39:42.148Z",
+      "dispatched_at": null,
+      "completed_at": null
+    },
+    {
+      "id": "trp_4",
+      "trip_code": "TR004",
+      "source": "Vatva Industrial Area",
+      "destination": "Sanand Warehouse",
+      "vehicle_id": null,
+      "driver_id": null,
+      "cargo_weight_kg": 3800,
+      "planned_distance_km": 31,
+      "status": "Draft",
+      "revenue": 0,
+      "final_odometer_km": null,
+      "fuel_consumed_l": null,
+      "created_at": "2026-07-12T05:39:42.148Z",
+      "dispatched_at": null,
+      "completed_at": null
+    }
+  ],
+  "maintenance": [
+    {
+      "id": "mnt_1",
+      "vehicle_id": "veh_1",
+      "service_type": "Oil Change",
+      "cost": 2500,
+      "date": "2026-07-07T05:39:42.148Z",
+      "status": "Completed"
+    },
+    {
+      "id": "mnt_2",
+      "vehicle_id": "veh_2",
+      "service_type": "Engine Repair",
+      "cost": 18000,
+      "date": "2026-07-06T05:39:42.148Z",
+      "status": "Completed"
+    },
+    {
+      "id": "mnt_3",
+      "vehicle_id": "veh_3",
+      "service_type": "Tyre Replace",
+      "cost": 6200,
+      "date": "2026-07-11T05:39:42.148Z",
+      "status": "In Shop"
+    }
+  ],
+  "fuel": [
+    {
+      "id": "fuel_1",
+      "vehicle_id": "veh_1",
+      "trip_id": null,
+      "date": "2026-07-05",
+      "liters": 42,
+      "cost": 3150
+    },
+    {
+      "id": "fuel_2",
+      "vehicle_id": "veh_2",
+      "trip_id": null,
+      "date": "2026-07-06",
+      "liters": 110,
+      "cost": 8400
+    },
+    {
+      "id": "fuel_3",
+      "vehicle_id": "veh_3",
+      "trip_id": null,
+      "date": "2026-07-06",
+      "liters": 28,
+      "cost": 2050
+    }
+  ],
+  "expenses": [
+    {
+      "id": "exp_1",
+      "trip_id": "trp_1",
+      "vehicle_id": "veh_2",
+      "toll": 340,
+      "other": 150,
+      "date": "2026-07-11T05:39:42.148Z"
+    }
+  ],
+  "activity": [
+    {
+      "id": "act_1",
+      "timestamp": "2026-07-06T05:39:42.148Z",
+      "actor": "Meera Shah",
+      "role": "fleet_manager",
+      "action": "vehicle.created",
+      "detail": "Registered VAN-05 (GJ01AB4521)",
+      "ok": true
+    },
+    {
+      "id": "act_2",
+      "timestamp": "2026-07-08T05:39:42.148Z",
+      "actor": "Raven K.",
+      "role": "driver",
+      "action": "trip.completed",
+      "detail": "TR002: Vatva Industrial Area \u2192 Sanand Warehouse \u2014 Van-05 & Alex back to Available",
+      "ok": true
+    },
+    {
+      "id": "act_3",
+      "timestamp": "2026-07-11T05:39:42.148Z",
+      "actor": "Raven K.",
+      "role": "driver",
+      "action": "trip.dispatched",
+      "detail": "TR001: Truck-11 / Priya \u2014 cargo 3200/5000kg OK",
+      "ok": true
+    },
+    {
+      "id": "act_4",
+      "timestamp": "2026-07-11T05:39:42.148Z",
+      "actor": "Meera Shah",
+      "role": "fleet_manager",
+      "action": "maintenance.opened",
+      "detail": "MINI-03 \u2192 Tyre Replace \u2014 vehicle set to In Shop",
+      "ok": true
+    }
+  ]
+}

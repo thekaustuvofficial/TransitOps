@@ -44,10 +44,12 @@ TransitOps/
 │   └── dispatch-automation-framework.png
 │
 ├── backend/                         <-- Express.js API server (Hybrid: db.json + PostgreSQL/Supabase)
-│   ├── db.json                      <-- Local demo flat-file database (seed + runtime fallback)
-│   ├── server.js                    <-- Main Express server: /api/data, /api/dispatch/recommend, /api/save
-│   ├── schema.sql                   <-- Supabase/PostgreSQL schema with ENUMs, FK, constraints & RLS policies
-│   ├── seed.js                      <-- Script to seed PostgreSQL tables from db.json
+│   ├── db/
+│   │   ├── db.json                  <-- Local demo flat-file database (seed + runtime fallback)
+│   │   ├── schema.sql               <-- Supabase/PostgreSQL schema with ENUMs, FK, constraints & RLS
+│   │   └── seed.js                  <-- Script to seed PostgreSQL/Supabase tables from db.json
+│   ├── .env.example                 <-- Template for DB_HOST, DB_USER, DB_PASS, PORT
+│   ├── server.js                    <-- Main Express server: all API routes and dispatch logic
 │   ├── setup_linux.sh               <-- One-shot setup script for local Linux environment
 │   ├── package.json                 <-- Backend dependencies (express, cors, pg)
 │   └── odoo_framework/              <-- Odoo bundle (future ERP integration layer)

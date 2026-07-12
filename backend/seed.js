@@ -32,11 +32,11 @@ async function seedDatabase() {
   };
 
   try {
-    console.log("🌱 Starting Database Seed...");
+    console.log("Starting database seed...");
     
     await insertData('vehicles', dbData.vehicles);
     await insertData('drivers', dbData.drivers);
-    console.log("✅ Assets & Drivers loaded.");
+    console.log("Assets & Drivers loaded.");
 
     await insertData('trips', dbData.trips);
     await insertData('maintenance', dbData.maintenance);
@@ -44,11 +44,11 @@ async function seedDatabase() {
     await insertData('expenses', dbData.expenses);
     await insertData('activity', dbData.activity);
     
-    console.log("✅ Operational & Financial data loaded.");
-    console.log("🚀 Seeding Complete! Postgres is fully loaded.");
+    console.log("Operational & Financial data loaded.");
+    console.log("Seeding complete. Postgres is fully loaded.");
     
   } catch (err) {
-    console.error("❌ Seeding failed:", err.message);
+    console.error("Seeding failed:", err.message);
   } finally {
     pool.end();
   }

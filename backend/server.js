@@ -1,19 +1,5 @@
-import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import pg from 'pg';
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const { Pool } = pg;
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const DB_FILE = path.join(__dirname, 'db.json');
-
-function readDb() {
-  return JSON.parse(fs.readFileSync(DB_FILE, 'utf-8'));
-}
 
 const app = express();
 app.use(cors());
@@ -21,18 +7,18 @@ app.use(express.json({ limit: '15mb' }));
 
 // Dynamic Postgres Connection Pool
 const connectionString = process.env.DATABASE_URL;
-const pool = connectionString 
-  ? new Pool({ 
-      connectionString, 
-      ssl: connectionString.includes('supabase.co') ? { rejectUnauthorized: false } : false 
-    })
+const pool = connectionString
+  ? new Pool({
+    connectionString,
+    ssl: connectionString.includes('supabase.co') ? { rejectUnauthorized: false } : false
+  })
   : new Pool({
-      user: process.env.DB_USER || 'postgres',
-      host: process.env.DB_HOST || 'localhost',
-      database: process.env.DB_NAME || 'postgres',
-      password: process.env.DB_PASSWORD || 'postgres',
-      port: parseInt(process.env.DB_PORT || '5432'),
-    });
+    user: process.env.DB_USER || 'postgres',
+    host: process.env.DB_HOST || 'localhost',
+    database: process.env.DB_NAME || 'postgres',
+    password: process.env.DB_PASSWORD || 'postgres',
+    port: parseInt(process.env.DB_PORT || '5432'),
+  });
 
 // Handle pool connection errors gracefully to prevent process crash
 pool.on('error', (err) => {
@@ -102,13 +88,13 @@ app.post('/api/dispatch/recommend', async (req, res) => {
 
     if (isDemoMode) {
       const db = readDb();
-      eligibleVehicles = db.vehicles.filter(v => 
-        v.status === 'Available' && 
+      eligibleVehicles = db.vehicles.filter(v =>
+        v.status === 'Available' &&
         v.max_capacity_kg >= cargoWeightKg &&
         (v.odometer_km - v.last_service_odometer_km) < SERVICE_INTERVAL_KM &&
         new Date(v.insurance_expiry) >= currentDate
       );
-      eligibleDrivers = db.drivers.filter(d => 
+      eligibleDrivers = db.drivers.filter(d =>
         d.status === 'Available' &&
         new Date(d.license_expiry) >= currentDate
       );
@@ -137,13 +123,13 @@ app.post('/api/dispatch/recommend', async (req, res) => {
         // License Category Check
         const needsHMV = truck.type === 'Truck';
         if (needsHMV && driver.license_category !== 'HMV') continue;
-        
+
         const reasons = [];
         let score = 0; // Lower score is better
 
         // Proximity Matching
         if (truck.current_location === source) {
-          score -= 50; 
+          score -= 50;
           reasons.push('Truck already at source');
         } else {
           score += 100;
@@ -153,27 +139,27 @@ app.post('/api/dispatch/recommend', async (req, res) => {
           score -= 50;
           reasons.push('Driver already at source');
         } else if (driver.current_location === truck.current_location) {
-          score -= 20; 
+          score -= 20;
           reasons.push('Driver at truck location');
         } else {
           score += 100;
         }
 
         // Cost Optimization
-        const truckCostPerKm = Number(truck.acquisition_cost) / 1000000; 
+        const truckCostPerKm = Number(truck.acquisition_cost) / 1000000;
         const driverCostPerHour = driver.license_category === 'HMV' ? 200 : 150;
         const estimatedCost = (truckCostPerKm * plannedDistanceKm) + (driverCostPerHour * estimatedDurationHours);
-        
+
         score += estimatedCost;
         reasons.push(`Estimated optimal cost: ₹${estimatedCost.toFixed(2)}`);
 
         // Capacity Efficiency 
         const wastedCapacity = truck.max_capacity_kg - cargoWeightKg;
         if (wastedCapacity > 1000) {
-           score += (wastedCapacity / 100); 
-           reasons.push('Warning: Large unused capacity');
+          score += (wastedCapacity / 100);
+          reasons.push('Warning: Large unused capacity');
         } else {
-           reasons.push('Optimal capacity match');
+          reasons.push('Optimal capacity match');
         }
 
         matches.push({
@@ -408,7 +394,7 @@ app.post('/api/reset', async (req, res) => {
   try {
     client = await pool.connect();
     await client.query('BEGIN');
-    
+
     await client.query('TRUNCATE expenses, fuel, maintenance, trips, drivers, vehicles, users, activity CASCADE');
 
     const dbData = readDb();
@@ -420,7 +406,7 @@ app.post('/api/reset', async (req, res) => {
         [u.id, u.name, u.email, u.password, u.role]
       );
     }
-    
+
     // 2. Vehicles
     for (const v of dbData.vehicles) {
       await client.query(
