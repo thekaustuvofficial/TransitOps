@@ -2,9 +2,33 @@
   <img src="./assets/logo.png" alt="TransitOps Logo" width="800"/>
 </p>
 
+<p align="center">
+  <img src="https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black" alt="React"/>
+  <img src="https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=white" alt="Vite"/>
+  <img src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white" alt="TypeScript"/>
+  <img src="https://img.shields.io/badge/TailwindCSS-4-06B6D4?logo=tailwindcss&logoColor=white" alt="Tailwind CSS"/>
+  <img src="https://img.shields.io/badge/Express-Backend-000000?logo=express&logoColor=white" alt="Express"/>
+  <img src="https://img.shields.io/badge/PostgreSQL-Schema-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL"/>
+  <img src="https://img.shields.io/badge/Supabase-Auth-3ECF8E?logo=supabase&logoColor=white" alt="Supabase"/>
+  <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"/>
+</p>
+
 # TransitOps: Smart Transport Operations Platform
 
 *An end-to-end transport operations platform built to digitize and streamline fleet management, routing, and expense tracking.*
+
+---
+
+## Table of Contents
+- [Workspace Structure](#workspace-structure)
+- [Overview](#overview)
+- [User Roles (RBAC)](#user-roles-rbac)
+- [Smart Business Rules (Automated)](#smart-business-rules-automated)
+- [Key Features Implemented](#key-features-implemented)
+- [System Architecture](#system-architecture)
+- [Screenshots](#screenshots)
+- [Getting Started](#getting-started)
+- [License](#license)
 
 ---
 
@@ -97,6 +121,28 @@ To prevent operational mistakes, TransitOps implements a state machine governed 
 
 ---
 
+## Screenshots
+
+<p align="center">
+  <img src="./assets/screenshot-dashboard.png" alt="Dashboard Screenshot" width="800"/>
+  <br/>
+  <em>Live Dashboard & KPIs</em>
+</p>
+
+<p align="center">
+  <img src="./assets/screenshot-dispatch.png" alt="Dispatch Screenshot" width="800"/>
+  <br/>
+  <em>Smart Dispatch Assist</em>
+</p>
+
+<p align="center">
+  <img src="./assets/screenshot-fleet.png" alt="Fleet Registry Screenshot" width="800"/>
+  <br/>
+  <em>Fleet Registry & Maintenance Tracking</em>
+</p>
+
+---
+
 ## Getting Started
 
 ### Prerequisites
@@ -120,6 +166,11 @@ To prevent operational mistakes, TransitOps implements a state machine governed 
    ```bash
    npm run build
    ```
+
+---
+
+## License
+This project is licensed under the **MIT License**. See the [LICENSE](./LICENSE) file for details.
 
 ---
 *Developed for modern logistics.*
