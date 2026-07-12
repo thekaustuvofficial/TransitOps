@@ -8,8 +8,9 @@ import { RuleViolation } from '../lib/db';
 import { fmtCurrency, fmtNumber } from '../lib/format';
 import {
   Navigation, Plus, Send, CheckSquare, XCircle,
-  MapPin, Package, Truck, User, Clock, CheckCircle2, Circle, Ban
+  MapPin, Package, Truck, User, Clock, CheckCircle2, Circle, Ban, Sparkles
 } from 'lucide-react';
+import { getDispatchRecommendations } from '../lib/dispatchLogic';
 
 /** Trip Lifecycle Timeline — visual inspired by the reference design */
 function TripLifecycle({ status }: { status: string }) {
@@ -152,6 +153,18 @@ export default function Trips() {
     if (new Date(d.license_expiry) <= new Date()) return false;
     return true;
   });
+
+  const recommendations = selectedTrip ? getDispatchRecommendations(
+    {
+      cargoWeightKg: selectedTrip.cargo_weight_kg,
+      source: selectedTrip.source,
+      destination: selectedTrip.destination,
+      estimatedDurationHours: Math.max(1, Math.ceil(selectedTrip.planned_distance_km / 50)),
+      plannedDistanceKm: selectedTrip.planned_distance_km
+    },
+    vehicles,
+    drivers
+  ) : [];
 
   const openDispatch = () => {
     setDispatchVehicleId('');
@@ -504,8 +517,59 @@ export default function Trips() {
           {dispatchErrorMsg && <Banner tone="error">{dispatchErrorMsg}</Banner>}
 
           <Banner tone="info">
-            <strong>Smart Dispatch Assist:</strong> Only eligible vehicles (capacity ≥ {selectedTrip?.cargo_weight_kg} kg, Available) and drivers (valid license, Available) are shown.
+            <strong>Smart Dispatch Assist:</strong> Only eligible vehicles (capacity &ge; {selectedTrip?.cargo_weight_kg} kg, Available) and drivers (valid license, Available) are shown.
           </Banner>
+
+          {recommendations.length > 0 && (
+            <div className="space-y-2.5">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-orange-500 uppercase tracking-wider font-display">
+                <Sparkles size={14} className="animate-pulse" />
+                <span>AI Automated Recommendations</span>
+              </div>
+              <div className="grid gap-2">
+                {recommendations.map((rec, index) => {
+                  const isSelected = dispatchVehicleId === rec.vehicle.id && dispatchDriverId === rec.driver.id;
+                  return (
+                    <button
+                      key={`${rec.vehicle.id}-${rec.driver.id}`}
+                      type="button"
+                      onClick={() => {
+                        setDispatchVehicleId(rec.vehicle.id);
+                        setDispatchDriverId(rec.driver.id);
+                      }}
+                      className={`text-left p-3 rounded-lg border transition-all ${
+                        isSelected
+                          ? "border-orange-500 bg-orange-500/10 shadow-sm"
+                          : "border-[var(--color-border)] bg-[var(--color-panel-2)]/60 hover:bg-[var(--color-panel-2)]"
+                      }`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="text-xs font-bold text-[var(--color-text)] flex items-center gap-1.5">
+                            <span className={`inline-flex rounded px-1.5 py-0.5 text-[9px] font-extrabold uppercase ${
+                              index === 0 ? "bg-emerald-500/15 text-emerald-500 border border-emerald-500/20" : "bg-[var(--color-border)] text-[var(--color-text-muted)]"
+                            }`}>
+                              {index === 0 ? "Best Match" : `Option ${index + 1}`}
+                            </span>
+                            <span>{rec.vehicle.name} + {rec.driver.name}</span>
+                          </div>
+                          <p className="text-[10px] text-[var(--color-text-faint)] mt-1 font-semibold">
+                            {rec.reasons.filter(r => !r.includes("₹")).join(" • ")}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-xs font-mono font-bold text-[var(--color-text)]">
+                            {fmtCurrency(rec.costEstimate)}
+                          </span>
+                          <div className="text-[9px] text-[var(--color-text-faint)] mt-0.5">Est. Cost</div>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           <Field label="Assign Vehicle" hint="Available vehicles with sufficient capacity">
             <Select required value={dispatchVehicleId} onChange={(e) => setDispatchVehicleId(e.target.value)}>
