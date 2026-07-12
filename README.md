@@ -15,7 +15,7 @@ TransitOps/
 │   ├── src/              <-- Application code, types, state-machine DB, components, pages
 │   ├── public/           <-- Static assets
 │   ├── package.json      <-- Dependencies (lucide-react, recharts, tailwind, etc.)
-│   └── vite.config.ts    <-- Vite build setup
+│   └── vite.config.ts    <-- Vite build setup (local dev + prod builds)
 ├── backend/              <-- Express JSON API, seeded data, Odoo bundle, and Postgres schema draft
 │   ├── db.json          <-- Local demo database / API snapshot
 │   ├── server.js        <-- Express seed server used by the frontend
@@ -61,6 +61,7 @@ To prevent operational mistakes, TransitOps implements a state machine governed 
 *   **Live Dashboard & KPIs:** Fleet Utilization %, Active/Available Vehicles, In Maintenance count, Active/Pending Trips, and Drivers On Duty.
 *   **Smart Dispatch Assist:** Allocation forms auto-filter dropdowns to show only eligible vehicles (matching capacity limits) and active drivers. Includes validation block banners.
 *   **Live Activity Feed:** Real-time audit log widget showing system transitions in real time.
+*   **Responsive table sorting and filters:** Quickly scan and segment assets, trips, and expenses.
 *   **License Expiry Countdowns:** Badges showing remaining valid days for driver licenses (Red for Expired/Critical (<30d), Amber (<90d)).
 *   **Maintenance Due Indicators:** Flagging vehicles with warning badges if they exceed 10,000 km since their last service.
 *   **Cost Anomaly Highlights:** Flags vehicles spending 25% above the fleet average cost.
@@ -112,6 +113,7 @@ To prevent operational mistakes, TransitOps implements a state machine governed 
    ```bash
    npm install
    ```
+   > Optional: use `npm install --legacy-peer-deps` if package compatibility warnings appear.
 3. Start the local development server:
    ```bash
    npm run dev
