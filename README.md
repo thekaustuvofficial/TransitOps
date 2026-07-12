@@ -199,6 +199,47 @@ Segments the fleet into Long Haul, Short Trucks, and Small Carriers, each with i
    ```
 
 ---
+## Future Scalability Scope
+
+### Six clear steps 
+
+1. Architecture & Tenant Isolation
+- Redesign the data model to separate each customer (tenant) so their data is kept private and isolated.
+- Add a tenant context so requests and data always belong to a specific customer.
+- Add simple feature rules so different plans can enable or limit features.
+
+2. Production REST API
+- Build a proper API with clear endpoints for vehicles, drivers, trips, maintenance, and reports.
+- Add input checks, pagination, and consistent error responses so integrations behave reliably.
+- Support bulk imports and transactional operations for safe, repeatable data changes.
+
+3. Billing & Subscriptions
+- Integrate a payment provider and add a billing flow for plans (starter, professional, enterprise).
+- Meter usage and enforce quotas for each plan (vehicle limits, API calls, users, etc.).
+- Provide webhook handling for payment events and automated plan changes.
+
+4. Frontend & Tenant UX
+- Move the app from local demo data to API-driven flows with token-based authentication.
+- Add tenant-aware settings, signup, and upgrade flows so organizations can onboard themselves.
+- Replace plain-demo authentication with secure sessions and role-aware UI.
+
+5. Cloud Deployment & Operations
+- Containerize the backend and deploy with infrastructure-as-code (IaC) and orchestration (cloud-managed services or Kubernetes).
+- Add managed databases, caching, CDN for static assets, and autoscaling for reliability.
+- Implement monitoring, logging, and health checks to keep the service observable and debuggable.
+
+6. Enterprise Features & Integrations
+- Strengthen security with MFA, single sign-on (SSO), and encrypted secrets management.
+- Add multi-currency and localization settings to support global customers.
+- Provide scheduled reporting, exports, webhooks, and a partner/reseller program for integrations.
+
+### Timeline and priority 
+- A staged approach works best: focus first on tenant isolation and a proper REST API, then billing and frontend migration, followed by cloud infra and enterprise features.
+- A typical phased rollout can take several months with cross-functional effort (engineering, QA, and DevOps).
+
+---
+
+---
 *Developed for modern logistics.*
 
 ---
@@ -207,17 +248,4 @@ Segments the fleet into Long Haul, Short Trucks, and Small Carriers, each with i
 This project is licensed under the **MIT License**. See the [LICENSE](./LICENSE) file for details.
 
 ---
-
-## Future Scalability Scope
-
-TransitOps is currently a focused demo that demonstrates core fleet and dispatch workflows. Below is a plain-language roadmap describing how the project can evolve into a production-ready, multi-tenant SaaS product.
-
-- Architecture & Tenant Isolation: redesign data and request flow so each customer (tenant) has private data and controlled feature access.
-- Production REST API: add proper CRUD endpoints, input validation, pagination, bulk imports, and consistent error responses.
-- Billing & Subscriptions: integrate payments, meter usage, enforce plan quotas, and react to subscription events.
-- Frontend & Tenant UX: move the UI to an API-driven model with token-based auth, tenant settings, signup, and upgrade paths.
-- Cloud Deployment & Operations: containerize, use IaC, add managed databases, caching, CDN, autoscaling, monitoring, and logging.
-- Enterprise Features & Integrations: add MFA/SSO, localization, scheduled reporting, webhooks, and reseller/partner workflows.
-
-This summary is intentionally concise — a detailed roadmap file (`FUTURE_SCALABILITY.md`) has been added to the repository with the same plain-language explanation for stakeholders and contributors.
 
