@@ -153,19 +153,19 @@ Segments the fleet into Long Haul, Short Trucks, and Small Carriers, each with i
 ## Screenshots
 
 <p align="center">
-  <img src="./assets/screenshot-dashboard.png" alt="Dashboard Screenshot" width="800"/>
+  <img src="./assets/dashboard.png" alt="Dashboard Screenshot" width="800"/>
   <br/>
   <em>Live Dashboard & KPIs</em>
 </p>
 
 <p align="center">
-  <img src="./assets/screenshot-dispatch.png" alt="Dispatch Screenshot" width="800"/>
+  <img src="./assets/dispatch.png" alt="Dispatch Screenshot" width="800"/>
   <br/>
   <em>Smart Dispatch Assist</em>
 </p>
 
 <p align="center">
-  <img src="./assets/screenshot-fleet.png" alt="Fleet Registry Screenshot" width="800"/>
+  <img src="./assets/fleet.png" alt="Fleet Registry Screenshot" width="800"/>
   <br/>
   <em>Fleet Registry & Maintenance Tracking</em>
 </p>
