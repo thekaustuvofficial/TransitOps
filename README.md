@@ -48,11 +48,12 @@ TransitOps/
 │   │   ├── db.json                  <-- Local demo flat-file database (seed + runtime fallback)
 │   │   ├── schema.sql               <-- Supabase/PostgreSQL schema with ENUMs, FK, constraints & RLS
 │   │   └── seed.js                  <-- Script to seed PostgreSQL/Supabase tables from db.json
+│   ├── odoo_framework/              <-- Odoo bundle (future ERP integration layer)
 │   ├── .env.example                 <-- Template for DB_HOST, DB_USER, DB_PASS, PORT
-│   ├── server.js                    <-- Main Express server: all API routes and dispatch logic
-│   ├── setup_linux.sh               <-- One-shot setup script for local Linux environment
+│   ├── odoo.conf                    <-- Odoo server configuration file
 │   ├── package.json                 <-- Backend dependencies (express, cors, pg)
-│   └── odoo_framework/              <-- Odoo bundle (future ERP integration layer)
+│   ├── server.js                    <-- Main Express server: all API routes and dispatch logic
+│   └── setup_linux.sh               <-- One-shot setup script for local Linux environment
 │
 ├── frontend/                        <-- React 19 + Vite 8 + TypeScript + Tailwind CSS v4
 │   ├── src/
