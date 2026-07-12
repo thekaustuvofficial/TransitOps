@@ -24,6 +24,7 @@ export interface Vehicle {
   last_service_odometer_km: number;
   region: string;
   current_location: string;
+  emi: number;
 }
 
 export type LicenseCategory = 'LMV' | 'HMV';

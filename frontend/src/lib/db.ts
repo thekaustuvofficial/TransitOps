@@ -6,6 +6,20 @@ import {
   SEED_USERS, SEED_VEHICLES, SEED_DRIVERS, SEED_TRIPS,
   SEED_MAINTENANCE, SEED_FUEL, SEED_EXPENSES, SEED_ACTIVITY,
 } from './seed';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+
+const isSupabaseConfigured =
+  supabaseUrl &&
+  supabaseAnonKey &&
+  !supabaseUrl.includes('your-supabase') &&
+  !supabaseAnonKey.includes('your-supabase');
+
+export const supabase = isSupabaseConfigured
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null;
 
 // ---------------------------------------------------------------------------
 // STORAGE ENGINE
@@ -63,7 +77,7 @@ class Database {
   private snap: Snapshot = loadSnapshot();
   private readonly listeners = new Set<Listener>();
 
-  public useBackend = false;
+  public useBackend = true;
 
   subscribe(fn: Listener): () => void {
     this.listeners.add(fn);
@@ -71,14 +85,71 @@ class Database {
   }
 
   async initializeBackend() {
-    try {
-      const res = await fetch('http://localhost:3001/api/data');
-      if (res.ok) {
-        this.snap = await res.json();
-        this.commit(true);
+    if (supabase) {
+      try {
+        const [
+          { data: users, error: errU },
+          { data: vehicles, error: errV },
+          { data: drivers, error: errD },
+          { data: trips, error: errT },
+          { data: maintenance, error: errM },
+          { data: fuel, error: errF },
+          { data: expenses, error: errE },
+          { data: activity, error: errA }
+        ] = await Promise.all([
+          supabase.from('users').select('*'),
+          supabase.from('vehicles').select('*'),
+          supabase.from('drivers').select('*'),
+          supabase.from('trips').select('*'),
+          supabase.from('maintenance').select('*'),
+          supabase.from('fuel').select('*'),
+          supabase.from('expenses').select('*'),
+          supabase.from('activity').select('*')
+        ]);
+
+        if (errU || errV || errD || errT || errM || errF || errE || errA) {
+          throw new Error("One or more tables could not be read from Supabase. Ensure tables are created.");
+        }
+
+        if (!vehicles || vehicles.length === 0) {
+          console.log("Supabase empty, seeding database...");
+          this.snap = {
+            users: SEED_USERS,
+            vehicles: SEED_VEHICLES,
+            drivers: SEED_DRIVERS,
+            trips: SEED_TRIPS,
+            maintenance: SEED_MAINTENANCE,
+            fuel: SEED_FUEL,
+            expenses: SEED_EXPENSES,
+            activity: SEED_ACTIVITY,
+          };
+          await this.commit(false);
+        } else {
+          this.snap = {
+            users: users || [],
+            vehicles: vehicles || [],
+            drivers: drivers || [],
+            trips: trips || [],
+            maintenance: maintenance || [],
+            fuel: fuel || [],
+            expenses: expenses || [],
+            activity: activity || [],
+          };
+          this.commit(true);
+        }
+      } catch (err) {
+        console.error("Supabase direct query failed, falling back to local database snapshot", err);
       }
-    } catch (err) {
-      console.warn("Express backend offline, falling back to local storage snapshot", err);
+    } else {
+      try {
+        const res = await fetch('http://localhost:3001/api/data');
+        if (res.ok) {
+          this.snap = await res.json();
+          this.commit(true);
+        }
+      } catch (err) {
+        console.warn("Express backend offline, falling back to local storage snapshot", err);
+      }
     }
   }
 
@@ -87,14 +158,31 @@ class Database {
     this.listeners.forEach((fn) => fn());
     
     if (this.useBackend && !skipBackend) {
-      try {
-        await fetch('http://localhost:3001/api/save', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(this.snap),
-        });
-      } catch (err) {
-        console.warn("Failed to synchronize state to backend server", err);
+      if (supabase) {
+        try {
+          await Promise.all([
+            supabase.from('users').upsert(this.snap.users),
+            supabase.from('vehicles').upsert(this.snap.vehicles),
+            supabase.from('drivers').upsert(this.snap.drivers),
+            supabase.from('trips').upsert(this.snap.trips),
+            supabase.from('maintenance').upsert(this.snap.maintenance),
+            supabase.from('fuel').upsert(this.snap.fuel),
+            supabase.from('expenses').upsert(this.snap.expenses),
+            supabase.from('activity').upsert(this.snap.activity)
+          ]);
+        } catch (err) {
+          console.error("Failed to synchronize state directly to Supabase", err);
+        }
+      } else {
+        try {
+          await fetch('http://localhost:3001/api/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(this.snap),
+          });
+        } catch (err) {
+          console.warn("Failed to synchronize state to backend server", err);
+        }
       }
     }
   }
@@ -348,13 +436,29 @@ class Database {
     return entry;
   }
 
-  reset() {
+  async reset() {
     localStorage.removeItem(STORAGE_KEY);
     this.snap = {
       users: SEED_USERS, vehicles: SEED_VEHICLES, drivers: SEED_DRIVERS, trips: SEED_TRIPS,
       maintenance: SEED_MAINTENANCE, fuel: SEED_FUEL, expenses: SEED_EXPENSES, activity: SEED_ACTIVITY,
     };
-    this.commit();
+    
+    if (this.useBackend && supabase) {
+      try {
+        await supabase.from('expenses').delete().neq('id', '');
+        await supabase.from('fuel').delete().neq('id', '');
+        await supabase.from('maintenance').delete().neq('id', '');
+        await supabase.from('trips').delete().neq('id', '');
+        await supabase.from('drivers').delete().neq('id', '');
+        await supabase.from('vehicles').delete().neq('id', '');
+        await supabase.from('users').delete().neq('id', '');
+        await supabase.from('activity').delete().neq('id', '');
+      } catch (err) {
+        console.error("Supabase direct reset failed:", err);
+      }
+    }
+    
+    await this.commit();
   }
 }
 
