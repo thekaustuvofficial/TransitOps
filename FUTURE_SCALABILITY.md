@@ -1,11 +1,6 @@
 # Future Scalability Scope
 
-This document summarizes, in simple terms, how TransitOps can evolve from a demo application into a production-ready, multi-tenant SaaS platform. It presents the high-level steps and goals without technical code — intended to be pasted into the README as a plain-language future roadmap.
-
-## Why scale
-TransitOps is currently a focused demo that showcases core fleet and dispatch workflows. To serve paying customers and support multiple organizations, the product needs changes to ensure data isolation, reliability, secure access, billing, and operational scale.
-
-## Six clear steps (plain language)
+## Six clear steps 
 
 1. Architecture & Tenant Isolation
 - Redesign the data model to separate each customer (tenant) so their data is kept private and isolated.
@@ -37,7 +32,7 @@ TransitOps is currently a focused demo that showcases core fleet and dispatch wo
 - Add multi-currency and localization settings to support global customers.
 - Provide scheduled reporting, exports, webhooks, and a partner/reseller program for integrations.
 
-## Timeline and priority (summary)
+## Timeline and priority 
 - A staged approach works best: focus first on tenant isolation and a proper REST API, then billing and frontend migration, followed by cloud infra and enterprise features.
 - A typical phased rollout can take several months with cross-functional effort (engineering, QA, and DevOps).
 
