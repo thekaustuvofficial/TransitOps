@@ -35,16 +35,63 @@
 ## Workspace Structure
 ```
 TransitOps/
-├── frontend/             <-- React + Vite + Tailwind CSS v4 + TypeScript lives here
-│   ├── src/              <-- Application code, types, state-machine DB, components, pages
-│   ├── public/           <-- Static assets
-│   ├── package.json      <-- Dependencies (lucide-react, recharts, tailwind, etc.)
-│   └── vite.config.ts    <-- Vite build setup (local dev + prod builds)
-├── backend/              <-- Express JSON API, seeded data, Odoo bundle, and Postgres schema draft
-│   ├── db.json          <-- Local demo database / API snapshot
-│   ├── server.js        <-- Express seed server used by the frontend
-│   └── schema.sql       <-- Postgres enums, constraints, and FK draft
-└── README.md             <-- Master documentation
+├── assets/                          <-- Project-level static media (logos, screenshots, diagrams)
+│   ├── logo.png
+│   ├── dashboard.png
+│   ├── dispatch.png
+│   ├── fleet.png
+│   ├── system-architecture.png
+│   └── dispatch-automation-framework.png
+│
+├── backend/                         <-- Express.js API server (Hybrid: db.json + PostgreSQL/Supabase)
+│   ├── db.json                      <-- Local demo flat-file database (seed + runtime fallback)
+│   ├── server.js                    <-- Main Express server: /api/data, /api/dispatch/recommend, /api/save
+│   ├── schema.sql                   <-- Supabase/PostgreSQL schema with ENUMs, FK, constraints & RLS policies
+│   ├── seed.js                      <-- Script to seed PostgreSQL tables from db.json
+│   ├── setup_linux.sh               <-- One-shot setup script for local Linux environment
+│   ├── package.json                 <-- Backend dependencies (express, cors, pg)
+│   └── odoo_framework/              <-- Odoo bundle (future ERP integration layer)
+│
+├── frontend/                        <-- React 19 + Vite 8 + TypeScript + Tailwind CSS v4
+│   ├── src/
+│   │   ├── components/              <-- Reusable UI primitives and shared widgets
+│   │   │   ├── primitives.tsx       <-- Base UI kit: Button, Input, Field, Badge, cx utility
+│   │   │   ├── ActivityFeed.tsx     <-- Real-time audit log widget
+│   │   │   ├── KpiCard.tsx          <-- Dashboard KPI stat card
+│   │   │   └── StatusBadge.tsx      <-- Color-coded status pill badge
+│   │   ├── context/                 <-- React Context providers (global state)
+│   │   │   ├── AuthContext.tsx      <-- Authentication state + login/logout actions
+│   │   │   └── ToastContext.tsx     <-- Global toast notification system
+│   │   ├── hooks/
+│   │   │   └── useDb.ts             <-- Custom hook to subscribe to the Database singleton
+│   │   ├── lib/                     <-- Core business logic and data layer
+│   │   │   ├── db.ts                <-- Database class: all CRUD, business rules, localStorage + backend sync
+│   │   │   ├── dispatchLogic.ts     <-- Automation Dispatch Network: Phases A–D matching algorithm
+│   │   │   ├── format.ts            <-- Formatting helpers (currency, date, distance)
+│   │   │   ├── id.ts                <-- Deterministic UID generator (uid prefix function)
+│   │   │   ├── permissions.ts       <-- RBAC permission matrix and role label maps
+│   │   │   └── seed.ts              <-- Frontend seed data (SEED_VEHICLES, SEED_DRIVERS, etc.)
+│   │   ├── pages/                   <-- Full-page module views (one per sidebar nav item)
+│   │   │   ├── Dashboard.tsx        <-- Live KPIs, fleet utilization chart, activity feed
+│   │   │   ├── Fleet.tsx            <-- Vehicle registry, maintenance due flags, ROI ledger, CSV export
+│   │   │   ├── Drivers.tsx          <-- Driver registry, license expiry countdowns, safety scores
+│   │   │   ├── Trips.tsx            <-- Trip lifecycle management + Smart Dispatch Assist modal
+│   │   │   ├── Maintenance.tsx      <-- Maintenance log, open/close service records
+│   │   │   ├── FuelExpenses.tsx     <-- Fuel log + expense ledger with cost anomaly highlights
+│   │   │   ├── Analytics.tsx        <-- Charts and reports (revenue, cost breakdown, utilization)
+│   │   │   └── Settings.tsx         <-- DB reset, backend toggle, system info
+│   │   ├── App.tsx                  <-- Root app shell: SPA routing, auth guard, sidebar, topbar
+│   │   ├── main.tsx                 <-- Vite entry point (ReactDOM.createRoot)
+│   │   ├── types.ts                 <-- All shared TypeScript interfaces and enums
+│   │   └── index.css                <-- Global CSS: design tokens, Tailwind base, animations
+│   ├── public/                      <-- Static public assets served by Vite
+│   ├── index.html                   <-- Vite HTML entry template
+│   ├── package.json                 <-- Frontend dependencies (react, lucide-react, recharts, tailwindcss)
+│   ├── vite.config.ts               <-- Vite config (React plugin, port setup)
+│   ├── tsconfig.json                <-- TypeScript root config
+│   └── tsconfig.app.json            <-- TypeScript app-specific compiler options
+│
+└── README.md                        <-- Master documentation (this file)
 ```
 
 ---
