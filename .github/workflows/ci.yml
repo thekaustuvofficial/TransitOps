@@ -16,10 +16,10 @@ jobs:
           fetch-depth: 0
           submodules: false
           persist-credentials: true
-      - name: Use Node.js 18
+      - name: Use Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 22
       - name: Install frontend deps
         working-directory: frontend
         run: npm ci
@@ -49,21 +49,28 @@ jobs:
           fetch-depth: 0
           submodules: false
           persist-credentials: true
-      - name: Use Node.js 18
+      - name: Use Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 22
       - name: Install backend deps
         working-directory: backend
         run: npm ci
-      - name: Start backend
-        working-directory: backend
-        run: nohup npm start &
         env:
           PGUSER: postgres
           PGPASSWORD: postgres
+      - name: Start backend
+        working-directory: backend
+        run: |
+          npm start > backend.log 2>&1 &
+          echo $! > backend.pid
       - name: Wait for backend
-        run: npx wait-on http://127.0.0.1:3001/api/data?demo=true --timeout 30000
+        run: npx -y wait-on http://127.0.0.1:3001/api/data?demo=true --timeout 30000
+      - name: Show backend logs on failure
+        if: failure()
+        run: |
+          echo "--- backend logs ---"
+          cat backend/backend.log || true
       - name: Backend API smoke
         run: |
           curl -fS http://127.0.0.1:3001/api/data?demo=true | jq .users | jq length
@@ -78,29 +85,46 @@ jobs:
           fetch-depth: 0
           submodules: false
           persist-credentials: true
-      - name: Use Node.js 18
+      - name: Use Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 22
       - name: Install frontend deps (with Playwright)
         working-directory: frontend
         run: |
           npm ci
           npx playwright install --with-deps
+      - name: Install backend deps (for e2e)
+        working-directory: backend
+        run: npm ci
+        env:
+          PGUSER: postgres
+          PGPASSWORD: postgres
       - name: Build frontend
         working-directory: frontend
         run: npm run build
       - name: Start preview server
         working-directory: frontend
-        run: nohup npm run preview -- --port 5173 &
+        run: |
+          npm run preview -- --port 5173 > preview.log 2>&1 &
+          echo $! > preview.pid
       - name: Start backend server
         working-directory: backend
-        run: nohup npm start &
+        run: |
+          npm start > backend.log 2>&1 &
+          echo $! > backend.pid
         env:
           PGUSER: postgres
           PGPASSWORD: postgres
       - name: Wait for services
-        run: npx wait-on http://127.0.0.1:5173/ --timeout 30000
+        run: npx -y wait-on http://127.0.0.1:5173/ --timeout 30000
+      - name: Show preview/backend logs on failure
+        if: failure()
+        run: |
+          echo "--- preview logs ---"
+          cat frontend/preview.log || true
+          echo "--- backend logs ---"
+          cat backend/backend.log || true
       - name: Run Playwright tests
         working-directory: frontend
         run: npm run test:e2e
