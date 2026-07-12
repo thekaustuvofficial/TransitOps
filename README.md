@@ -125,3 +125,18 @@ To prevent operational mistakes, TransitOps implements a state machine governed 
 
 ---
 *Developed for modern logistics.*
+
+---
+
+## Future Scalability Scope
+
+TransitOps is currently a focused demo that demonstrates core fleet and dispatch workflows. Below is a plain-language roadmap describing how the project can evolve into a production-ready, multi-tenant SaaS product.
+
+- Architecture & Tenant Isolation: redesign data and request flow so each customer (tenant) has private data and controlled feature access.
+- Production REST API: add proper CRUD endpoints, input validation, pagination, bulk imports, and consistent error responses.
+- Billing & Subscriptions: integrate payments, meter usage, enforce plan quotas, and react to subscription events.
+- Frontend & Tenant UX: move the UI to an API-driven model with token-based auth, tenant settings, signup, and upgrade paths.
+- Cloud Deployment & Operations: containerize, use IaC, add managed databases, caching, CDN, autoscaling, monitoring, and logging.
+- Enterprise Features & Integrations: add MFA/SSO, localization, scheduled reporting, webhooks, and reseller/partner workflows.
+
+This summary is intentionally concise — a detailed roadmap file (`FUTURE_SCALABILITY.md`) has been added to the repository with the same plain-language explanation for stakeholders and contributors.
