@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./assets/logo.png" alt="TransitOps Logo" width="800"/>
+</p>
+
 # TransitOps: Smart Transport Operations Platform
 
 *An end-to-end transport operations platform built to digitize and streamline fleet management, routing, and expense tracking.*
@@ -61,6 +65,32 @@ To prevent operational mistakes, TransitOps implements a state machine governed 
 *   **CSV Data Export:** Client-side CSV download of complete vehicle ROI ledger.
 *   **Pre-seeded Demo Dataset:** Coherent dataset utilizing Gujarat registrations, INR currency, and regional route paths (Ahmedabad/Gandhinagar).
 *   **Vibrant Dark UI:** Modern theme utilizing curated harmonious palettes (green, amber, blue, red) and micro-animations.
+
+---
+
+## System Architecture
+
+<p align="center">
+  <img src="./assets/system-architecture.png" alt="System Architecture Diagram" width="800"/>
+</p>
+
+<details>
+<summary><strong>TransitOps System Architecture Overview</strong></summary>
+
+**Frontend Client (React + Vite + TypeScript + Tailwind v4)**
+
+* **User Interface:** A fast, responsive, dark-themed portal tailored for logistics operations.
+* **Role-Based Access Control (RBAC):** Automatically hides or shows specific modules based on the user's role (e.g., Financial Analyst vs. Dispatcher).
+* **Client-Side Validation:** Instantly checks business rules (like vehicle load limits and driver availability) in the browser before sending data to the server.
+
+**Backend & Database (Supabase + PostgreSQL)**
+
+* **Authentication:** Manages secure user logins and issues role-based access tokens.
+* **Relational Database:** The central PostgreSQL hub storing all structured data for Vehicles, Drivers, Trips, Maintenance, and Expenses.
+* **Row Level Security (RLS):** Acts as a strict backend firewall, blocking unauthorized data edits based on user roles, even if frontend restrictions are bypassed.
+* **Real-Time Updates:** Uses WebSockets to stream live data changes, ensuring the dashboard, activity feeds, and fleet statuses update instantly without refreshing the page.
+
+</details>
 
 ---
 
