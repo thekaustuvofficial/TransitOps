@@ -14,20 +14,18 @@ export default function Analytics() {
   const trips = db.trips;
   const fuelLogs = db.fuel;
   const maintenanceLogs = db.maintenance;
-  const expenses = db.expenses;
 
   // 1. Operational Cost per Vehicle Calculations
   const fleetCostsBreakdown = vehicles.map((v) => {
     const fuelCost = fuelLogs.filter((f) => f.vehicle_id === v.id).reduce((sum, f) => sum + f.cost, 0);
     const maintCost = maintenanceLogs.filter((m) => m.vehicle_id === v.id).reduce((sum, m) => sum + m.cost, 0);
-    const tripExp = expenses.filter((e) => e.vehicle_id === v.id).reduce((sum, e) => sum + e.toll + e.other, 0);
-    const totalCost = fuelCost + maintCost + tripExp;
+    const totalCost = fuelCost + maintCost;
     const totalRevenue = trips
       .filter((t) => t.vehicle_id === v.id && t.status === 'Completed')
       .reduce((sum, t) => sum + t.revenue, 0);
 
     const netProfit = totalRevenue - totalCost;
-    // ROI = (Revenue - (Maintenance + Fuel + Expenses)) / Acquisition Cost
+    // ROI = (Revenue - (Maintenance + Fuel)) / Acquisition Cost
     const roiPercent = v.acquisition_cost > 0
       ? Math.round((netProfit / v.acquisition_cost) * 100)
       : 0;
@@ -40,7 +38,6 @@ export default function Analytics() {
       acqCost: v.acquisition_cost,
       fuelCost,
       maintCost,
-      tripExp,
       totalCost,
       totalRevenue,
       netProfit,
@@ -90,7 +87,7 @@ export default function Analytics() {
         item.acqCost,
         item.fuelCost,
         item.maintCost,
-        item.tripExp,
+        '',
         item.totalCost,
         item.totalRevenue,
         `${item.roiPercent}%`,
@@ -108,10 +105,11 @@ export default function Analytics() {
       link.setAttribute('download', `TransitOPS_Fleet_ROI_Report_${new Date().toISOString().slice(0, 10)}.csv`);
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
+      link.remove();
 
       toast.push('success', 'ROI Report downloaded successfully.');
     } catch (error) {
+      console.error(error);
       toast.push('error', 'Failed to generate CSV export.');
     }
   };
@@ -128,22 +126,23 @@ export default function Analytics() {
           <td style="text-align:right">${fmtCurrency(item.acqCost)}</td>
           <td style="text-align:right">${fmtCurrency(item.fuelCost)}</td>
           <td style="text-align:right">${fmtCurrency(item.maintCost)}</td>
-          <td style="text-align:right">${fmtCurrency(item.tripExp)}</td>
+          <td style="text-align:right">—</td>
           <td style="text-align:right;font-weight:bold">${fmtCurrency(item.totalCost)}</td>
           <td style="text-align:right;color:#16a34a">${fmtCurrency(item.totalRevenue)}</td>
           <td style="text-align:right;font-weight:bold">${item.roiPercent}%</td>
         </tr>`
       ).join('');
 
-      printWindow.document.write(`
+      const html = `
         <!DOCTYPE html><html><head><title>TransitOps Fleet ROI Report</title>
         <style>
           body { font-family: 'Inter', Arial, sans-serif; padding: 40px; color: #1e293b; }
-          h1 { font-size: 20px; margin-bottom: 4px; }
-          p.sub { font-size: 12px; color: #64748b; margin-bottom: 24px; }
+      `;
+      printWindow.document.documentElement.innerHTML = html;
           table { width: 100%; border-collapse: collapse; font-size: 11px; }
           th { background: #f1f5f9; padding: 8px 12px; text-align: left; border-bottom: 2px solid #e2e8f0; font-weight: 600; }
-          td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; }
+    } catch (error) {
+      console.error(error);
           .kpi-row { display: flex; gap: 16px; margin-bottom: 24px; }
           .kpi { flex: 1; padding: 16px; border: 1px solid #e2e8f0; border-radius: 8px; }
           .kpi-label { font-size: 10px; text-transform: uppercase; color: #64748b; font-weight: 600; letter-spacing: 0.5px; }
@@ -161,7 +160,7 @@ export default function Analytics() {
         <table><thead><tr>
           <th>Vehicle</th><th>Reg No</th><th>Type</th><th style="text-align:right">Acq. Cost</th>
           <th style="text-align:right">Fuel</th><th style="text-align:right">Maint.</th>
-          <th style="text-align:right">Tolls</th><th style="text-align:right">Total Cost</th>
+          <th style="text-align:right">Trip Exp.</th><th style="text-align:right">Total Cost</th>
           <th style="text-align:right">Revenue</th><th style="text-align:right">ROI</th>
         </tr></thead><tbody>${rows}</tbody></table>
         </body></html>
@@ -217,7 +216,7 @@ export default function Analytics() {
           label="Operational Cost"
           value={fmtCurrency(totalOperationalCost)}
           accent="var(--color-status-retired)"
-          sub="Fuel + Maintenance + Tolls"
+          sub="Fuel + Maintenance"
         />
         <KpiCard
           label="Total Revenue"

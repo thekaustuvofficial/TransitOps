@@ -39,6 +39,7 @@ export default function Drivers() {
   const [licenseExpiry, setLicenseExpiry] = useState('');
   const [contact, setContact] = useState('');
   const [safetyScore, setSafetyScore] = useState(90);
+  const [currentLocation, setCurrentLocation] = useState('');
   const [status, setStatus] = useState<DriverStatus>('Available');
 
   const drivers = db.drivers;
@@ -61,6 +62,7 @@ export default function Drivers() {
     setLicenseExpiry(new Date(Date.now() + 180 * 86400000).toISOString().slice(0, 10)); // Default 6 months from now
     setContact('');
     setSafetyScore(90);
+    setCurrentLocation('');
     setStatus('Available');
     setErrorMsg(null);
     setModalOpen(true);
@@ -74,6 +76,7 @@ export default function Drivers() {
     setLicenseExpiry(new Date(d.license_expiry).toISOString().slice(0, 10));
     setContact(d.contact);
     setSafetyScore(d.safety_score);
+    setCurrentLocation(d.current_location);
     setStatus(d.status);
     setErrorMsg(null);
     setModalOpen(true);
@@ -93,6 +96,7 @@ export default function Drivers() {
           license_expiry: new Date(licenseExpiry).toISOString(),
           contact,
           safety_score: safetyScore,
+          current_location: currentLocation,
           status,
         });
         toast.push('success', `Driver ${name} updated successfully.`);
@@ -104,6 +108,7 @@ export default function Drivers() {
           license_expiry: new Date(licenseExpiry).toISOString(),
           contact,
           safety_score: safetyScore,
+          current_location: currentLocation,
         });
         toast.push('success', `Driver ${name} registered successfully.`);
       }
@@ -216,6 +221,7 @@ export default function Drivers() {
                 <th className="px-4 py-3 font-semibold">License Expiry</th>
                 <th className="px-4 py-3 font-semibold">Expiry Status</th>
                 <th className="px-4 py-3 font-semibold">Contact</th>
+                <th className="px-4 py-3 font-semibold">Current Location</th>
                 <th className="px-4 py-3 font-semibold">Safety Score</th>
                 <th className="px-4 py-3 font-semibold">Status</th>
                 {isEditable && <th className="px-4 py-3 font-semibold text-right">Actions</th>}
@@ -243,6 +249,7 @@ export default function Drivers() {
                       {getExpiryBadge(drv.license_expiry)}
                     </td>
                     <td className="px-4 py-3.5 font-mono">{drv.contact}</td>
+                    <td className="px-4 py-3.5">{drv.current_location || '—'}</td>
                     <td className="px-4 py-3.5">
                       <div className="flex items-center gap-1.5">
                         <span className="font-mono font-bold" style={{ color: safety.color }}>
@@ -274,7 +281,7 @@ export default function Drivers() {
               })}
               {filteredDrivers.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="px-4 py-8 text-center text-[var(--color-text-faint)]">
+                  <td colSpan={10} className="px-4 py-8 text-center text-[var(--color-text-faint)]">
                     No drivers registered. Register a driver or adjust your filters.
                   </td>
                 </tr>
@@ -355,6 +362,15 @@ export default function Drivers() {
               />
             </Field>
           </div>
+
+          <Field label="Current Location" hint="Used for proximity matching">
+            <Input
+              required
+              value={currentLocation}
+              onChange={(e) => setCurrentLocation(e.target.value)}
+              placeholder="Ahmedabad Hub"
+            />
+          </Field>
 
           {editingDriver && (
             <Field label="Force Status override" hint="State machine status override">

@@ -10,6 +10,27 @@ import { Plus, Edit2, AlertTriangle, ArrowUpDown } from 'lucide-react';
 import type { Vehicle, VehicleType, VehicleStatus } from '../types';
 import { RuleViolation } from '../lib/db';
 
+type SortHeaderProps = Readonly<{
+  field: keyof Vehicle;
+  children: React.ReactNode;
+  activeField: keyof Vehicle | null;
+  onToggle: (field: keyof Vehicle) => void;
+}>;
+
+function SortHeader({ field, children, activeField, onToggle }: SortHeaderProps) {
+  return (
+    <th
+      className="px-4 py-3 font-medium cursor-pointer select-none hover:text-[var(--color-text)] transition-colors"
+      onClick={() => onToggle(field)}
+    >
+      <span className="inline-flex items-center gap-1">
+        {children}
+        <ArrowUpDown size={10} className={activeField === field ? 'text-amber-500' : 'opacity-30'} />
+      </span>
+    </th>
+  );
+}
+
 export default function Fleet() {
   const db = useDb();
   const { user } = useAuth();
@@ -41,6 +62,8 @@ export default function Fleet() {
   const [odometer, setOdometer] = useState(0);
   const [acqCost, setAcqCost] = useState(500000);
   const [region, setRegion] = useState('');
+  const [currentLocation, setCurrentLocation] = useState('');
+  const [insuranceExpiry, setInsuranceExpiry] = useState('');
   const [status, setStatus] = useState<VehicleStatus>('Available');
 
   // Sort State
@@ -79,18 +102,6 @@ export default function Fleet() {
     }
   };
 
-  const SortHeader = ({ field, children }: { field: keyof Vehicle; children: React.ReactNode }) => (
-    <th
-      className="px-4 py-3 font-medium cursor-pointer select-none hover:text-[var(--color-text)] transition-colors"
-      onClick={() => toggleSort(field)}
-    >
-      <span className="inline-flex items-center gap-1">
-        {children}
-        <ArrowUpDown size={10} className={sortKey === field ? 'text-amber-500' : 'opacity-30'} />
-      </span>
-    </th>
-  );
-
   const openAddModal = () => {
     setEditingVehicle(null);
     setRegNo('');
@@ -100,6 +111,8 @@ export default function Fleet() {
     setOdometer(0);
     setAcqCost(500000);
     setRegion('');
+    setCurrentLocation('');
+    setInsuranceExpiry(new Date(Date.now() + 365 * 86400000).toISOString().slice(0, 10));
     setStatus('Available');
     setErrorMsg(null);
     setModalOpen(true);
@@ -114,6 +127,8 @@ export default function Fleet() {
     setOdometer(v.odometer_km);
     setAcqCost(v.acquisition_cost);
     setRegion(v.region);
+    setCurrentLocation(v.current_location);
+    setInsuranceExpiry(new Date(v.insurance_expiry).toISOString().slice(0, 10));
     setStatus(v.status);
     setErrorMsg(null);
     setModalOpen(true);
@@ -135,6 +150,8 @@ export default function Fleet() {
           odometer_km: odometer,
           acquisition_cost: acqCost,
           region,
+          current_location: currentLocation,
+          insurance_expiry: new Date(insuranceExpiry).toISOString(),
           status, // Admin overrides allowed but logs in feed
         });
         toast.push('success', `Vehicle ${name} updated successfully.`);
@@ -147,6 +164,8 @@ export default function Fleet() {
           odometer_km: odometer,
           acquisition_cost: acqCost,
           region,
+          current_location: currentLocation,
+          insurance_expiry: new Date(insuranceExpiry).toISOString(),
         });
         toast.push('success', `Vehicle ${name} registered successfully.`);
       }
@@ -225,13 +244,15 @@ export default function Fleet() {
           <table className="w-full text-left text-xs">
             <thead>
               <tr className="border-b border-[var(--color-border)] text-[var(--color-text-faint)] font-semibold tracking-tight text-[11px] bg-[var(--color-panel-2)]">
-                <SortHeader field="reg_no">Reg No</SortHeader>
-                <SortHeader field="name">Model / Name</SortHeader>
+                <SortHeader field="reg_no" activeField={sortKey} onToggle={toggleSort}>Reg No</SortHeader>
+                <SortHeader field="name" activeField={sortKey} onToggle={toggleSort}>Model / Name</SortHeader>
                 <th className="px-4 py-3 font-semibold">Type</th>
-                <SortHeader field="max_capacity_kg">Capacity</SortHeader>
-                <SortHeader field="odometer_km">Odometer</SortHeader>
-                <SortHeader field="acquisition_cost">Cost</SortHeader>
+                <SortHeader field="max_capacity_kg" activeField={sortKey} onToggle={toggleSort}>Capacity</SortHeader>
+                <SortHeader field="odometer_km" activeField={sortKey} onToggle={toggleSort}>Odometer</SortHeader>
+                <SortHeader field="acquisition_cost" activeField={sortKey} onToggle={toggleSort}>Cost</SortHeader>
                 <th className="px-4 py-3 font-semibold">Depot / Region</th>
+                <th className="px-4 py-3 font-semibold">Current Location</th>
+                <th className="px-4 py-3 font-semibold">Insurance Expiry</th>
                 <th className="px-4 py-3 font-semibold">Status</th>
                 <th className="px-4 py-3 font-semibold">Alerts</th>
                 {isEditable && <th className="px-4 py-3 font-semibold text-right">Actions</th>}
@@ -262,6 +283,8 @@ export default function Fleet() {
                       {fmtCurrency(veh.acquisition_cost)}
                     </td>
                     <td className="px-4 py-3.5">{veh.region || '—'}</td>
+                    <td className="px-4 py-3.5">{veh.current_location || '—'}</td>
+                    <td className="px-4 py-3.5 font-mono">{new Date(veh.insurance_expiry).toISOString().slice(0, 10)}</td>
                     <td className="px-4 py-3.5">
                       <StatusBadge status={veh.status} />
                     </td>
@@ -292,7 +315,7 @@ export default function Fleet() {
               })}
               {sortedVehicles.length === 0 && (
                 <tr>
-                  <td colSpan={10} className="px-4 py-8 text-center text-[var(--color-text-faint)]">
+                  <td colSpan={12} className="px-4 py-8 text-center text-[var(--color-text-faint)]">
                     No vehicles found. Register a vehicle or adjust your filters.
                   </td>
                 </tr>
@@ -380,6 +403,26 @@ export default function Fleet() {
                 value={region}
                 onChange={(e) => setRegion(e.target.value)}
                 placeholder="Ahmedabad Depot"
+              />
+            </Field>
+
+            <Field label="Current Location" hint="Used for proximity matching">
+              <Input
+                required
+                value={currentLocation}
+                onChange={(e) => setCurrentLocation(e.target.value)}
+                placeholder="Ahmedabad Hub"
+              />
+            </Field>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label="Insurance Expiry">
+              <Input
+                required
+                type="date"
+                value={insuranceExpiry}
+                onChange={(e) => setInsuranceExpiry(e.target.value)}
               />
             </Field>
 

@@ -16,8 +16,10 @@ TransitOps/
 │   ├── public/           <-- Static assets
 │   ├── package.json      <-- Dependencies (lucide-react, recharts, tailwind, etc.)
 │   └── vite.config.ts    <-- Vite build setup
-├── backend/              <-- Docker Compose & Odoo plugins (currently empty/stub)
-│   └── .gitkeep
+├── backend/              <-- Express JSON API, seeded data, Odoo bundle, and Postgres schema draft
+│   ├── db.json          <-- Local demo database / API snapshot
+│   ├── server.js        <-- Express seed server used by the frontend
+│   └── schema.sql       <-- Postgres enums, constraints, and FK draft
 └── README.md             <-- Master documentation
 ```
 
@@ -62,7 +64,8 @@ To prevent operational mistakes, TransitOps implements a state machine governed 
 *   **License Expiry Countdowns:** Badges showing remaining valid days for driver licenses (Red for Expired/Critical (<30d), Amber (<90d)).
 *   **Maintenance Due Indicators:** Flagging vehicles with warning badges if they exceed 10,000 km since their last service.
 *   **Cost Anomaly Highlights:** Flags vehicles spending 25% above the fleet average cost.
-*   **CSV Data Export:** Client-side CSV download of complete vehicle ROI ledger.
+*   **Compliance & Proximity Fields:** Vehicles and drivers track insurance expiry and current location for dispatch matching and safety review.
+*   **CSV Data Export:** Client-side CSV download of vehicle ROI ledger.
 *   **Pre-seeded Demo Dataset:** Coherent dataset utilizing Gujarat registrations, INR currency, and regional route paths (Ahmedabad/Gandhinagar).
 *   **Vibrant Dark UI:** Modern theme utilizing curated harmonious palettes (green, amber, blue, red) and micro-animations.
 
@@ -83,12 +86,12 @@ To prevent operational mistakes, TransitOps implements a state machine governed 
 * **Role-Based Access Control (RBAC):** Automatically hides or shows specific modules based on the user's role (e.g., Financial Analyst vs. Dispatcher).
 * **Client-Side Validation:** Instantly checks business rules (like vehicle load limits and driver availability) in the browser before sending data to the server.
 
-**Backend & Database (Supabase + PostgreSQL)**
+**Backend & Database (Supabase + PostgreSQL Draft)**
 
 * **Authentication:** Manages secure user logins and issues role-based access tokens.
-* **Relational Database:** The central PostgreSQL hub storing all structured data for Vehicles, Drivers, Trips, Maintenance, and Expenses.
-* **Row Level Security (RLS):** Acts as a strict backend firewall, blocking unauthorized data edits based on user roles, even if frontend restrictions are bypassed.
-* **Real-Time Updates:** Uses WebSockets to stream live data changes, ensuring the dashboard, activity feeds, and fleet statuses update instantly without refreshing the page.
+* **Relational Database:** The schema draft stores Vehicles, Drivers, Trips, Maintenance, Fuel, Expenses, and Activity.
+* **Strict Constraints:** Unique plate/license constraints, enum-based statuses, and safe `SET NULL` trip foreign keys are defined in the schema draft.
+* **Operational Scope:** Hackathon reporting keeps operational cost to **Fuel + Maintenance** only; trip expenses remain a separate ledger.
 
 </details>
 
