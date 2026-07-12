@@ -57,10 +57,10 @@ function AppContent() {
     db.useBackend = useBackend;
     if (useBackend) {
       db.initializeBackend().then(() => {
-        toast.push('info', 'Connected to Database Backend Server');
+        toast.push('success', 'Connected to Database Backend Server');
       });
     } else {
-      toast.push('info', 'Switched to Local Demo Data');
+      toast.push('success', 'Switched to Local Demo Data');
     }
   }, [useBackend]);
 
