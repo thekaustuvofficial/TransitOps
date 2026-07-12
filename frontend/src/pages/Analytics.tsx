@@ -1,9 +1,9 @@
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useDb } from '../hooks/useDb';
 import { useToast } from '../context/ToastContext';
 import { Card, Button } from '../components/primitives';
 import { KpiCard } from '../components/KpiCard';
-import { fmtCurrency } from '../lib/format';
+import { fmtCurrency, fmtNumber } from '../lib/format';
 import { Download, AlertTriangle, FileText } from 'lucide-react';
 
 export default function Analytics() {
@@ -19,13 +19,14 @@ export default function Analytics() {
   const fleetCostsBreakdown = vehicles.map((v) => {
     const fuelCost = fuelLogs.filter((f) => f.vehicle_id === v.id).reduce((sum, f) => sum + f.cost, 0);
     const maintCost = maintenanceLogs.filter((m) => m.vehicle_id === v.id).reduce((sum, m) => sum + m.cost, 0);
-    const totalCost = fuelCost + maintCost;
+    const emiCost = Number(v.emi) || 0;
+    const totalCost = fuelCost + maintCost + emiCost;
     const totalRevenue = trips
       .filter((t) => t.vehicle_id === v.id && t.status === 'Completed')
       .reduce((sum, t) => sum + t.revenue, 0);
 
     const netProfit = totalRevenue - totalCost;
-    // ROI = (Revenue - (Maintenance + Fuel)) / Acquisition Cost
+    // ROI = (Revenue - Total Operational Cost) / Acquisition Cost
     const roiPercent = v.acquisition_cost > 0
       ? Math.round((netProfit / v.acquisition_cost) * 100)
       : 0;
@@ -38,6 +39,7 @@ export default function Analytics() {
       acqCost: v.acquisition_cost,
       fuelCost,
       maintCost,
+      emiCost,
       totalCost,
       totalRevenue,
       netProfit,
@@ -68,6 +70,8 @@ export default function Analytics() {
     ? Math.round((activeVehicles.length / nonRetiredVehicles.length) * 100)
     : 0;
 
+  const grossProfit = totalRevenue - totalOperationalCost;
+
   // 3. Chart Data
   const chartData = fleetCostsBreakdown.map((item) => ({
     name: item.name,
@@ -75,6 +79,57 @@ export default function Analytics() {
     Revenue: item.totalRevenue,
     ROI: item.roiPercent,
   }));
+
+  // Group trips, fuel, maintenance, and EMIs by month for the line trend chart
+  const monthlyDataMap: Record<string, { month: string; revenue: number; cost: number; profit: number }> = {};
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const curMonthIndex = new Date().getMonth();
+  
+  // Seed last 6 months
+  for (let i = 5; i >= 0; i--) {
+    const mIdx = (curMonthIndex - i + 12) % 12;
+    const mName = monthNames[mIdx];
+    monthlyDataMap[mName] = { month: mName, revenue: 0, cost: 0, profit: 0 };
+  }
+
+  // 1. Add revenue from completed trips
+  trips.filter(t => t.status === 'Completed' && t.completed_at).forEach(t => {
+    const mName = monthNames[new Date(t.completed_at!).getMonth()];
+    if (monthlyDataMap[mName]) {
+      monthlyDataMap[mName].revenue += Number(t.revenue) || 0;
+    }
+  });
+
+  // 2. Add fuel expenses
+  fuelLogs.forEach(f => {
+    const mName = monthNames[new Date(f.date).getMonth()];
+    if (monthlyDataMap[mName]) {
+      monthlyDataMap[mName].cost += Number(f.cost) || 0;
+    }
+  });
+
+  // 3. Add maintenance expenses
+  maintenanceLogs.filter(m => m.status === 'Completed').forEach(m => {
+    const mName = monthNames[new Date(m.date).getMonth()];
+    if (monthlyDataMap[mName]) {
+      monthlyDataMap[mName].cost += Number(m.cost) || 0;
+    }
+  });
+
+  // 4. Add monthly vehicle EMIs
+  vehicles.filter(v => v.status !== 'Retired').forEach(v => {
+    const emiVal = Number(v.emi) || 0;
+    Object.keys(monthlyDataMap).forEach(mName => {
+      monthlyDataMap[mName].cost += emiVal;
+    });
+  });
+
+  // 5. Calculate net profit per month
+  Object.keys(monthlyDataMap).forEach(k => {
+    monthlyDataMap[k].profit = monthlyDataMap[k].revenue - monthlyDataMap[k].cost;
+  });
+
+  const monthlyTrendData = Object.values(monthlyDataMap);
 
   // 4. CSV Exporter
   const handleExportCSV = () => {
@@ -202,7 +257,25 @@ export default function Analytics() {
       </div>
 
       {/* KPI Metric Grid */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
+        <KpiCard
+          label="Total Revenue"
+          value={fmtCurrency(totalRevenue)}
+          accent="var(--color-status-available)"
+          sub="Gross completed revenues"
+        />
+        <KpiCard
+          label="Operational Cost"
+          value={fmtCurrency(totalOperationalCost)}
+          accent="var(--color-status-retired)"
+          sub="Fuel + Maint + EMI"
+        />
+        <KpiCard
+          label="Gross Profit"
+          value={fmtCurrency(grossProfit)}
+          accent="var(--color-status-ontrip)"
+          sub="Total Revenue - Total Cost"
+        />
         <KpiCard
           label="Fuel Efficiency"
           value={`${fuelEfficiency} km/L`}
@@ -212,52 +285,88 @@ export default function Analytics() {
         <KpiCard
           label="Fleet Utilization"
           value={`${fleetUtilizationPercent}%`}
-          accent="var(--color-status-ontrip)"
-          sub="Of active non-retired fleet"
-        />
-        <KpiCard
-          label="Operational Cost"
-          value={fmtCurrency(totalOperationalCost)}
-          accent="var(--color-status-retired)"
-          sub="Fuel + Maintenance"
-        />
-        <KpiCard
-          label="Total Revenue"
-          value={fmtCurrency(totalRevenue)}
           accent="var(--color-status-shop)"
-          sub="Gross completed revenues"
+          sub="Of active non-retired fleet"
         />
       </div>
 
-      {/* Recharts Profitability Chart */}
-      <Card className="p-5 border-[var(--color-border)] bg-[var(--color-panel)] shadow-sm">
-        <h3 className="font-display mb-4 text-sm font-bold tracking-tight text-[var(--color-text)]">
-          Cost vs Revenue
-        </h3>
-        <div className="h-72 w-full text-xs">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={chartData}
-              margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border-soft)" />
-              <XAxis dataKey="name" stroke="var(--color-text-muted)" />
-              <YAxis stroke="var(--color-text-muted)" tickFormatter={(v) => `₹${v/1000}k`} />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'var(--color-panel)',
-                  borderColor: 'var(--color-border)',
-                  color: 'var(--color-text)',
-                }}
-                formatter={(value: any) => [fmtCurrency(Number(value)), '']}
-              />
-              <Legend />
-              <Bar dataKey="Cost" fill="#ef4444" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="Revenue" fill="#22c55e" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </Card>
+      {/* Recharts Charts Grid */}
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+        {/* Cost vs Revenue Per Vehicle */}
+        <Card className="p-5 border-[var(--color-border)] bg-[var(--color-panel)] shadow-sm">
+          <h3 className="font-display mb-4 text-sm font-bold tracking-tight text-[var(--color-text)]">
+            Cost vs Revenue Per Deployed Vehicle
+          </h3>
+          <div className="h-72 w-full text-xs">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={chartData}
+                margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border-soft)" />
+                <XAxis dataKey="name" stroke="var(--color-text-muted)" />
+                <YAxis stroke="var(--color-text-muted)" tickFormatter={(v) => `₹${v/1000}k`} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'var(--color-panel)',
+                    borderColor: 'var(--color-border)',
+                    color: 'var(--color-text)',
+                  }}
+                  formatter={(value: any) => [fmtCurrency(Number(value)), '']}
+                />
+                <Legend />
+                <Bar dataKey="Cost" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="Revenue" fill="#22c55e" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+
+        {/* Monthly Financial Trend Chart */}
+        <Card className="p-5 border-[var(--color-border)] bg-[var(--color-panel)] shadow-sm">
+          <h3 className="font-display mb-4 text-sm font-bold tracking-tight text-[var(--color-text)]">
+            Monthly Financial Trend
+          </h3>
+          <div className="h-72 w-full text-xs">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart
+                data={monthlyTrendData}
+                margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+              >
+                <defs>
+                  <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#22c55e" stopOpacity={0.2}/>
+                    <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="colorCost" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.2}/>
+                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="colorProfit" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.2}/>
+                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border-soft)" />
+                <XAxis dataKey="month" stroke="var(--color-text-muted)" />
+                <YAxis stroke="var(--color-text-muted)" tickFormatter={(v) => `₹${v/1000}k`} />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'var(--color-panel)',
+                    borderColor: 'var(--color-border)',
+                    color: 'var(--color-text)',
+                  }}
+                  formatter={(value: any) => [fmtCurrency(Number(value)), '']}
+                />
+                <Legend />
+                <Area type="monotone" dataKey="revenue" name="Revenue" stroke="#22c55e" fillOpacity={1} fill="url(#colorRev)" strokeWidth={2} />
+                <Area type="monotone" dataKey="cost" name="Total Cost" stroke="#ef4444" fillOpacity={1} fill="url(#colorCost)" strokeWidth={2} />
+                <Area type="monotone" dataKey="profit" name="Gross Profit" stroke="#f59e0b" fillOpacity={1} fill="url(#colorProfit)" strokeWidth={2} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+      </div>
 
       {/* Detailed ROI & Cost Anomaly Ledger */}
       <Card className="overflow-hidden border-[var(--color-border)] bg-[var(--color-panel)] shadow-sm">
@@ -287,9 +396,58 @@ export default function Analytics() {
                 // Cost Anomaly Highlight: If vehicle total cost is > 25% above average fleet cost
                 const isAnomaly = item.totalCost > averageVehicleCost * 1.25 && item.totalCost > 0;
 
+                const vObj = vehicles.find(v => v.id === item.id);
+                const kmSinceLastService = vObj ? vObj.odometer_km - vObj.last_service_odometer_km : 0;
+                const maintRequired = kmSinceLastService >= 10000;
+
+                const insuranceStartDate = vObj?.insurance_expiry 
+                  ? new Date(new Date(vObj.insurance_expiry).getTime() - 365 * 24 * 60 * 60 * 1000).toLocaleDateString('en-IN') 
+                  : '—';
+                const insuranceExpiryDate = vObj?.insurance_expiry 
+                  ? new Date(vObj.insurance_expiry).toLocaleDateString('en-IN') 
+                  : '—';
+
                 return (
                   <tr key={item.id} className="text-[var(--color-text-muted)] hover:text-[var(--color-text)]">
-                    <td className="px-4 py-3.5 font-medium text-[var(--color-text)]">{item.name}</td>
+                    <td className="px-4 py-3.5 font-medium text-[var(--color-text)]">
+                      <div className="group relative cursor-help inline-block">
+                        <span className="underline decoration-dotted decoration-[var(--color-text-faint)] font-bold">
+                          {item.name}
+                        </span>
+
+                        {/* Hover Popover Detail Card */}
+                        <div className="pointer-events-none absolute left-0 bottom-full mb-2 z-50 w-64 rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] p-3 shadow-xl opacity-0 transition-opacity duration-200 group-hover:opacity-100 backdrop-blur-md">
+                          <div className="text-xs font-bold text-[var(--color-text)] border-b border-[var(--color-border-soft)] pb-1.5 mb-2 flex items-center justify-between">
+                            <span>{item.name}</span>
+                            <span className="text-[10px] font-mono text-orange-500 font-bold">{item.regNo}</span>
+                          </div>
+                          <div className="space-y-1 text-[11px] text-[var(--color-text-muted)] font-medium text-left">
+                            <div className="flex justify-between">
+                              <span>Travelled Distance:</span>
+                              <span className="font-mono text-[var(--color-text)] font-semibold">{fmtNumber(vObj?.odometer_km || 0)} km</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Monthly EMI:</span>
+                              <span className="font-mono text-emerald-500 font-bold">{fmtCurrency(Number(vObj?.emi) || 0)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Insurance Start:</span>
+                              <span className="font-mono text-[var(--color-text)] font-semibold">{insuranceStartDate}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span>Insurance Expiry:</span>
+                              <span className="font-mono text-[var(--color-text)] font-semibold">{insuranceExpiryDate}</span>
+                            </div>
+                            <div className="flex justify-between border-t border-[var(--color-border-soft)] pt-1.5 mt-1.5">
+                              <span>Maint. Required:</span>
+                              <span className={`font-bold ${maintRequired ? 'text-red-500 animate-pulse' : 'text-emerald-500'}`}>
+                                {maintRequired ? 'Yes (Due)' : 'No (Healthy)'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </td>
                     <td className="px-4 py-3.5 font-mono font-semibold">{item.regNo}</td>
                     <td className="px-4 py-3.5 font-mono text-right">{fmtCurrency(item.totalCost)}</td>
                     <td className="px-4 py-3.5 font-mono text-right text-emerald-500">{fmtCurrency(item.totalRevenue)}</td>

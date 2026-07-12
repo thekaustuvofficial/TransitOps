@@ -167,10 +167,32 @@ export default function Trips() {
   ) : [];
 
   const openDispatch = () => {
-    setDispatchVehicleId('');
-    setDispatchDriverId('');
     setDispatchErrorMsg(null);
     setDispatchModalOpen(true);
+
+    if (selectedTrip) {
+      const recs = getDispatchRecommendations(
+        {
+          cargoWeightKg: selectedTrip.cargo_weight_kg,
+          source: selectedTrip.source,
+          destination: selectedTrip.destination,
+          estimatedDurationHours: Math.max(1, Math.ceil(selectedTrip.planned_distance_km / 50)),
+          plannedDistanceKm: selectedTrip.planned_distance_km
+        },
+        vehicles,
+        drivers
+      );
+      if (recs.length > 0) {
+        setDispatchVehicleId(recs[0].vehicle.id);
+        setDispatchDriverId(recs[0].driver.id);
+      } else {
+        setDispatchVehicleId('');
+        setDispatchDriverId('');
+      }
+    } else {
+      setDispatchVehicleId('');
+      setDispatchDriverId('');
+    }
   };
 
   const handleDispatch = (e: React.FormEvent) => {
