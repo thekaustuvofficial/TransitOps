@@ -108,6 +108,6 @@ export interface ActivityEntry {
   ok: boolean;
 }
 
-export type Module = 'fleet' | 'drivers' | 'trips' | 'fuel_exp' | 'analytics' | 'maintenance' | 'settings';
+export type Module = 'fleet' | 'drivers' | 'trips' | 'fuel_exp' | 'analytics' | 'maintenance' | 'settings' | 'driver_portal';
 export type Permission = 'full' | 'view' | 'none';
 export type PermissionMatrix = Record<Role, Record<Module, Permission>>;

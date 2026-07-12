@@ -14,19 +14,19 @@ import type { PermissionMatrix, Role, Module, Permission } from '../types';
 export const PERMISSIONS: PermissionMatrix = {
   fleet_manager: {
     fleet: 'full', drivers: 'full', trips: 'full', fuel_exp: 'view',
-    analytics: 'view', maintenance: 'full', settings: 'full',
+    analytics: 'view', maintenance: 'full', settings: 'full', driver_portal: 'full',
   },
   dispatcher: {
     fleet: 'view', drivers: 'view', trips: 'full', fuel_exp: 'none',
-    analytics: 'none', maintenance: 'none', settings: 'none',
+    analytics: 'none', maintenance: 'none', settings: 'none', driver_portal: 'full',
   },
   safety_officer: {
     fleet: 'view', drivers: 'full', trips: 'view', fuel_exp: 'none',
-    analytics: 'view', maintenance: 'full', settings: 'none',
+    analytics: 'view', maintenance: 'full', settings: 'none', driver_portal: 'full',
   },
   financial_analyst: {
     fleet: 'view', drivers: 'none', trips: 'view', fuel_exp: 'full',
-    analytics: 'full', maintenance: 'view', settings: 'none',
+    analytics: 'full', maintenance: 'view', settings: 'none', driver_portal: 'full',
   },
 };
 

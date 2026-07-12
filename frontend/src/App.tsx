@@ -15,13 +15,14 @@ import Maintenance from './pages/Maintenance';
 import FuelExpenses from './pages/FuelExpenses';
 import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
+import DriverPortal from './pages/DriverPortal';
 
 // Primitives Import
 import { Field, Input, Button, cx } from './components/primitives';
 
 // Icon Imports
 import {
-  Truck, Users, Navigation, Wrench, Fuel, BarChart3, Settings as SettingsIcon, LogOut, ShieldAlert, Key, HelpCircle, Sun, Moon, LayoutDashboard, Menu, X as XIcon, Send
+  Truck, Users, Navigation, Wrench, Fuel, BarChart3, Settings as SettingsIcon, LogOut, ShieldAlert, Key, HelpCircle, Sun, Moon, LayoutDashboard, Menu, X as XIcon, Send, Smartphone
 } from 'lucide-react';
 
 function AppContent() {
@@ -312,6 +313,7 @@ function AppContent() {
     { id: 'maintenance', label: 'Maintenance', icon: <Wrench size={16} /> },
     { id: 'fuel_exp', label: 'Fuel & Expenses', icon: <Fuel size={16} /> },
     { id: 'analytics', label: 'Analytics', icon: <BarChart3 size={16} /> },
+    { id: 'driver_portal', label: 'Driver Portal', icon: <Smartphone size={16} /> },
     { id: 'settings', label: 'Settings', icon: <SettingsIcon size={16} /> },
   ];
 
@@ -529,6 +531,7 @@ function AppContent() {
                   case 'maintenance': return <Maintenance />;
                   case 'fuel_exp': return <FuelExpenses />;
                   case 'analytics': return <Analytics />;
+                  case 'driver_portal': return <DriverPortal />;
                   case 'settings': return <Settings />;
                   default: return <Fleet />;
                 }
