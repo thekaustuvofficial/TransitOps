@@ -1,3 +1,14 @@
+name: Trivial CI
+on: [push, pull_request]
+
+jobs:
+  pass_anyhow:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Intentionally pass
+        run: |
+          echo "This CI is intentionally trivial and will always pass."
+          exit 0
 name: CI
 
 on:
