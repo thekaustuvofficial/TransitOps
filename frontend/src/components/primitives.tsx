@@ -223,7 +223,7 @@ export function Modal({ open, onClose, title, children, width = 'max-w-lg' }: {
   }, [open]);
 
   if (!open) return null;
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
       {/* Backdrop */}
       <button
@@ -233,7 +233,7 @@ export function Modal({ open, onClose, title, children, width = 'max-w-lg' }: {
       />
       {/* Panel */}
       <div className={cx(
-        'relative w-full animate-slide-in rounded-2xl overflow-hidden shadow-2xl',
+        'relative w-full animate-slide-in rounded-2xl overflow-hidden shadow-2xl z-10',
         'border border-[var(--color-border)] bg-[var(--color-panel)]',
         width
       )}>
@@ -242,7 +242,7 @@ export function Modal({ open, onClose, title, children, width = 'max-w-lg' }: {
           <h2 className="font-display text-sm font-bold tracking-tight text-[var(--color-text)]">{title}</h2>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-[var(--color-text-muted)] hover:bg-[var(--color-border)] hover:text-[var(--color-text)] transition-all"
+            className="rounded-lg p-1.5 text-[var(--color-text-muted)] hover:bg-[var(--color-border)] hover:text-[var(--color-text)] transition-all cursor-pointer"
             aria-label="Close"
           >
             <X size={15} />
@@ -251,7 +251,8 @@ export function Modal({ open, onClose, title, children, width = 'max-w-lg' }: {
         {/* Body — scrolls internally, never overflows the viewport */}
         <div className="max-h-[calc(90vh-60px)] overflow-y-auto px-6 py-5">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
