@@ -15,6 +15,14 @@ jobs:
           submodules: false
           persist-credentials: false
           clean: false
+      - name: Remove unused odoo_framework
+        run: |
+          if [ -d "backend/odoo_framework" ]; then
+            rm -rf backend/odoo_framework || true
+            echo "Removed backend/odoo_framework from workspace"
+          else
+            echo "backend/odoo_framework not present; nothing to remove"
+          fi
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
