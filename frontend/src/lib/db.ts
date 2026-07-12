@@ -175,9 +175,18 @@ class Database {
     if (this.useBackend && !skipBackend) {
       if (supabase) {
         try {
+          const vehiclesPayload = this.snap.vehicles.map(v => ({
+            ...v,
+            created_at: (v as any).created_at || new Date().toISOString()
+          }));
+          const driversPayload = this.snap.drivers.map(d => ({
+            ...d,
+            created_at: (d as any).created_at || new Date().toISOString()
+          }));
+
           const resU = await supabase.from('users').upsert(this.snap.users);
-          const resV = await supabase.from('vehicles').upsert(this.snap.vehicles);
-          const resD = await supabase.from('drivers').upsert(this.snap.drivers);
+          const resV = await supabase.from('vehicles').upsert(vehiclesPayload);
+          const resD = await supabase.from('drivers').upsert(driversPayload);
           const resT = await supabase.from('trips').upsert(this.snap.trips);
           const resM = await supabase.from('maintenance').upsert(this.snap.maintenance);
           const resF = await supabase.from('fuel').upsert(this.snap.fuel);
