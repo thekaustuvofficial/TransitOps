@@ -1,0 +1,41 @@
+[
+    {
+        "id": 1,
+        "name": "Ford Transit - Delivery 01",
+        "license_plate": "XYZ-1234",
+        "driver_id": [
+            10,
+            "Alex Johnson"
+        ],
+        "odometer": 14500.5,
+        "state_id": [
+            2,
+            "Registered"
+        ]
+    },
+    {
+        "id": 2,
+        "name": "Tesla Model 3 - Executive",
+        "license_plate": "EV-9999",
+        "driver_id": false,
+        "odometer": 420.0,
+        "state_id": [
+            1,
+            "New Request"
+        ]
+    },
+    {
+        "id": 3,
+        "name": "Chevy Silverado - Heavy",
+        "license_plate": "TRK-1022",
+        "driver_id": [
+            15,
+            "Sarah Smith"
+        ],
+        "odometer": 89000.2,
+        "state_id": [
+            4,
+            "Maintenance"
+        ]
+    }
+]
