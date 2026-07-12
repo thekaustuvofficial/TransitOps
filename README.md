@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./assets/logo.png" alt="TransitOps Logo" width="220"/>
+  <img src="./assets/logo.png" alt="TransitOps Logo" width="800"/>
 </p>
 
 # TransitOps: Smart Transport Operations Platform
