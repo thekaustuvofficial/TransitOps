@@ -16,6 +16,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 18
+        - uses: actions/checkout@v4
+          with:
+            fetch-depth: 0
+            submodules: true
+            persist-credentials: true
       - name: Install frontend deps
         working-directory: frontend
         run: npm ci
@@ -45,12 +50,20 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 18
+        - uses: actions/checkout@v4
+          with:
+            fetch-depth: 0
+            submodules: true
+            persist-credentials: true
       - name: Install backend deps
         working-directory: backend
         run: npm ci
       - name: Start backend
         working-directory: backend
         run: nohup npm start &
+          env:
+            PGUSER: postgres
+            PGPASSWORD: postgres
       - name: Wait for backend
         run: npx wait-on http://127.0.0.1:3001/api/data?demo=true --timeout 30000
       - name: Backend API smoke
@@ -67,6 +80,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 18
+        - uses: actions/checkout@v4
+          with:
+            fetch-depth: 0
+            submodules: true
+            persist-credentials: true
       - name: Install frontend deps (with Playwright)
         working-directory: frontend
         run: |
@@ -81,6 +99,9 @@ jobs:
       - name: Start backend server
         working-directory: backend
         run: nohup npm start &
+          env:
+            PGUSER: postgres
+            PGPASSWORD: postgres
       - name: Wait for services
         run: npx wait-on http://127.0.0.1:5173/ --timeout 30000
       - name: Run Playwright tests
