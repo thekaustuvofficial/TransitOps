@@ -24,11 +24,12 @@ export default function Settings() {
 
   const handleResetData = () => {
     if (window.confirm('WARNING: This will delete all your local modifications and reset the database to the default seed dataset. Proceed?')) {
-      db.reset();
-      toast.push('success', 'Database reset to initial seeds successfully. Reloading...');
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      db.reset().then(() => {
+        toast.push('success', 'Database reset to initial seeds successfully. Reloading...');
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      });
     }
   };
 
@@ -191,7 +192,7 @@ export default function Settings() {
             </div>
 
             <p className="text-xs text-[var(--color-text-muted)] mb-6 leading-relaxed">
-              Resetting database will clear all locally saved modifications, active trip dispatches, logged expenses, and restored fleet vehicle odometers. All records will revert back to Gujarat seeds.
+              Resetting database will clear all locally saved modifications, active trip dispatches, logged expenses, and restored fleet vehicle odometers. All records will revert back to the initial seed dataset.
             </p>
 
             <Button

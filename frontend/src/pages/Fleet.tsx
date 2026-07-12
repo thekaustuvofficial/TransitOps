@@ -62,6 +62,7 @@ export default function Fleet() {
   const [currentLocation, setCurrentLocation] = useState('');
   const [insuranceExpiry, setInsuranceExpiry] = useState('');
   const [status, setStatus] = useState<VehicleStatus>('Available');
+  const [emi, setEmi] = useState(0);
 
   // Sort State
   const [sortKey, setSortKey] = useState<keyof Vehicle | null>(null);
@@ -111,6 +112,7 @@ export default function Fleet() {
     setCurrentLocation('');
     setInsuranceExpiry(new Date(Date.now() + 365 * 86400000).toISOString().slice(0, 10));
     setStatus('Available');
+    setEmi(0);
     setErrorMsg(null);
     setModalOpen(true);
   };
@@ -128,6 +130,7 @@ export default function Fleet() {
     const insDate = new Date(v.insurance_expiry);
     setInsuranceExpiry(isNaN(insDate.getTime()) ? '' : insDate.toISOString().slice(0, 10));
     setStatus(v.status);
+    setEmi(v.emi || 0);
     setErrorMsg(null);
     setModalOpen(true);
   };
@@ -166,6 +169,7 @@ export default function Fleet() {
           current_location: currentLocation,
           insurance_expiry: new Date(insuranceExpiry).toISOString(),
           status,
+          emi,
         });
         toast.push('success', `Vehicle ${name} updated successfully.`);
       } else {
@@ -179,6 +183,7 @@ export default function Fleet() {
           region,
           current_location: currentLocation,
           insurance_expiry: new Date(insuranceExpiry).toISOString(),
+          emi,
         });
         toast.push('success', `Vehicle ${name} registered successfully.`);
       }
@@ -353,7 +358,8 @@ export default function Fleet() {
                       <div className="text-[10px] text-[var(--color-text-faint)] mt-0.5 font-semibold">Cap: {fmtNumber(veh.max_capacity_kg)} kg</div>
                     </td>
                     <td className="px-6 py-4 font-mono text-xs">
-                      {fmtCurrency(veh.acquisition_cost)}
+                      <div>{fmtCurrency(veh.acquisition_cost)}</div>
+                      <div className="text-[10px] text-[var(--color-text-faint)] mt-0.5">EMI: {fmtCurrency(veh.emi || 0)}/mo</div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-xs text-[var(--color-text)] font-semibold">{veh.region || '—'}</div>
@@ -461,7 +467,7 @@ export default function Fleet() {
               </Field>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-3">
               <Field label="Odometer (km)">
                 <Input
                   required
@@ -480,6 +486,17 @@ export default function Fleet() {
                   min={1}
                   value={acqCost}
                   onChange={(e) => setAcqCost(Number(e.target.value))}
+                  className="py-2 text-xs"
+                />
+              </Field>
+
+              <Field label="Monthly EMI (₹)" hint="Enter 0 if vehicle is fully paid">
+                <Input
+                  required
+                  type="number"
+                  min={0}
+                  value={emi}
+                  onChange={(e) => setEmi(Number(e.target.value))}
                   className="py-2 text-xs"
                 />
               </Field>

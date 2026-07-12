@@ -7,6 +7,7 @@ dist/
 frontend/dist/
 
 # Local env files
+.env
 .env*.local
 
 # System/IDE files

@@ -39,7 +39,7 @@ TransitOps/
 │   ├── src/              <-- Application code, types, state-machine DB, components, pages
 │   ├── public/           <-- Static assets
 │   ├── package.json      <-- Dependencies (lucide-react, recharts, tailwind, etc.)
-│   └── vite.config.ts    <-- Vite build setup
+│   └── vite.config.ts    <-- Vite build setup (local dev + prod builds)
 ├── backend/              <-- Express JSON API, seeded data, Odoo bundle, and Postgres schema draft
 │   ├── db.json          <-- Local demo database / API snapshot
 │   ├── server.js        <-- Express seed server used by the frontend
@@ -85,6 +85,7 @@ To prevent operational mistakes, TransitOps implements a state machine governed 
 *   **Live Dashboard & KPIs:** Fleet Utilization %, Active/Available Vehicles, In Maintenance count, Active/Pending Trips, and Drivers On Duty.
 *   **Smart Dispatch Assist:** Allocation forms auto-filter dropdowns to show only eligible vehicles (matching capacity limits) and active drivers. Includes validation block banners.
 *   **Live Activity Feed:** Real-time audit log widget showing system transitions in real time.
+*   **Responsive table sorting and filters:** Quickly scan and segment assets, trips, and expenses.
 *   **License Expiry Countdowns:** Badges showing remaining valid days for driver licenses (Red for Expired/Critical (<30d), Amber (<90d)).
 *   **Maintenance Due Indicators:** Flagging vehicles with warning badges if they exceed 10,000 km since their last service.
 *   **Cost Anomaly Highlights:** Flags vehicles spending 25% above the fleet average cost.
@@ -187,6 +188,7 @@ Segments the fleet into Long Haul, Short Trucks, and Small Carriers, each with i
    ```bash
    npm install
    ```
+   > Optional: use `npm install --legacy-peer-deps` if package compatibility warnings appear.
 3. Start the local development server:
    ```bash
    npm run dev
@@ -197,9 +199,53 @@ Segments the fleet into Long Haul, Short Trucks, and Small Carriers, each with i
    ```
 
 ---
+## Future Scalability Scope
+
+### Six clear steps 
+
+1. Architecture & Tenant Isolation
+- Redesign the data model to separate each customer (tenant) so their data is kept private and isolated.
+- Add a tenant context so requests and data always belong to a specific customer.
+- Add simple feature rules so different plans can enable or limit features.
+
+2. Production REST API
+- Build a proper API with clear endpoints for vehicles, drivers, trips, maintenance, and reports.
+- Add input checks, pagination, and consistent error responses so integrations behave reliably.
+- Support bulk imports and transactional operations for safe, repeatable data changes.
+
+3. Billing & Subscriptions
+- Integrate a payment provider and add a billing flow for plans (starter, professional, enterprise).
+- Meter usage and enforce quotas for each plan (vehicle limits, API calls, users, etc.).
+- Provide webhook handling for payment events and automated plan changes.
+
+4. Frontend & Tenant UX
+- Move the app from local demo data to API-driven flows with token-based authentication.
+- Add tenant-aware settings, signup, and upgrade flows so organizations can onboard themselves.
+- Replace plain-demo authentication with secure sessions and role-aware UI.
+
+5. Cloud Deployment & Operations
+- Containerize the backend and deploy with infrastructure-as-code (IaC) and orchestration (cloud-managed services or Kubernetes).
+- Add managed databases, caching, CDN for static assets, and autoscaling for reliability.
+- Implement monitoring, logging, and health checks to keep the service observable and debuggable.
+
+6. Enterprise Features & Integrations
+- Strengthen security with MFA, single sign-on (SSO), and encrypted secrets management.
+- Add multi-currency and localization settings to support global customers.
+- Provide scheduled reporting, exports, webhooks, and a partner/reseller program for integrations.
+
+### Timeline and priority 
+- A staged approach works best: focus first on tenant isolation and a proper REST API, then billing and frontend migration, followed by cloud infra and enterprise features.
+- A typical phased rollout can take several months with cross-functional effort (engineering, QA, and DevOps).
+
+---
+
+---
+*Developed for modern logistics.*
+
+---
 
 ## License
 This project is licensed under the **MIT License**. See the [LICENSE](./LICENSE) file for details.
 
 ---
-*Developed for modern logistics.*
+

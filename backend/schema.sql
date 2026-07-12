@@ -1,7 +1,7 @@
 -- TransitOps Supabase Schema
 -- This schema includes ENUMs, proper foreign keys, cascades, and Row Level Security (RLS) setup.
 
-CREATE TYPE user_role AS ENUM ('driver', 'fleet_manager', 'safety_officer', 'financial_analyst');
+CREATE TYPE user_role AS ENUM ('dispatcher', 'fleet_manager', 'safety_officer', 'financial_analyst');
 CREATE TYPE vehicle_status AS ENUM ('Available', 'On Trip', 'In Shop', 'Retired');
 CREATE TYPE driver_status AS ENUM ('Available', 'On Trip', 'Off Duty', 'Suspended');
 CREATE TYPE trip_status AS ENUM ('Draft', 'Dispatched', 'Completed', 'Cancelled');
@@ -30,6 +30,7 @@ CREATE TABLE vehicles (
   last_service_odometer_km INTEGER NOT NULL DEFAULT 0,
   region TEXT NOT NULL,
   current_location TEXT NOT NULL,
+  emi NUMERIC(12, 2) NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -120,18 +121,45 @@ ALTER TABLE fuel ENABLE ROW LEVEL SECURITY;
 ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE activity ENABLE ROW LEVEL SECURITY;
 
--- Note: The following are basic policies that allow reads for authenticated users.
--- In a true production Supabase setup, you would base these on `auth.uid()` and `auth.jwt() ->> 'role'`.
+-- Allow public CRUD access for easy setup using the anon key.
+-- (For production, configure proper role check checks e.g. using auth.jwt())
 
-CREATE POLICY "Allow authenticated read" ON users FOR SELECT USING (true);
-CREATE POLICY "Allow authenticated read" ON vehicles FOR SELECT USING (true);
-CREATE POLICY "Allow authenticated read" ON drivers FOR SELECT USING (true);
-CREATE POLICY "Allow authenticated read" ON trips FOR SELECT USING (true);
-CREATE POLICY "Allow authenticated read" ON maintenance FOR SELECT USING (true);
-CREATE POLICY "Allow authenticated read" ON fuel FOR SELECT USING (true);
-CREATE POLICY "Allow authenticated read" ON expenses FOR SELECT USING (true);
-CREATE POLICY "Allow authenticated read" ON activity FOR SELECT USING (true);
+CREATE POLICY "Allow public select" ON users FOR SELECT USING (true);
+CREATE POLICY "Allow public insert" ON users FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public update" ON users FOR UPDATE USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public delete" ON users FOR DELETE USING (true);
 
--- Allow Fleet Managers to INSERT/UPDATE (Example logic based on role)
--- CREATE POLICY "Fleet Managers can update trips" ON trips FOR UPDATE 
--- USING ( (select role from users where id = auth.uid()) = 'fleet_manager' );
+CREATE POLICY "Allow public select" ON vehicles FOR SELECT USING (true);
+CREATE POLICY "Allow public insert" ON vehicles FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public update" ON vehicles FOR UPDATE USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public delete" ON vehicles FOR DELETE USING (true);
+
+CREATE POLICY "Allow public select" ON drivers FOR SELECT USING (true);
+CREATE POLICY "Allow public insert" ON drivers FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public update" ON drivers FOR UPDATE USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public delete" ON drivers FOR DELETE USING (true);
+
+CREATE POLICY "Allow public select" ON trips FOR SELECT USING (true);
+CREATE POLICY "Allow public insert" ON trips FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public update" ON trips FOR UPDATE USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public delete" ON trips FOR DELETE USING (true);
+
+CREATE POLICY "Allow public select" ON maintenance FOR SELECT USING (true);
+CREATE POLICY "Allow public insert" ON maintenance FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public update" ON maintenance FOR UPDATE USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public delete" ON maintenance FOR DELETE USING (true);
+
+CREATE POLICY "Allow public select" ON fuel FOR SELECT USING (true);
+CREATE POLICY "Allow public insert" ON fuel FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public update" ON fuel FOR UPDATE USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public delete" ON fuel FOR DELETE USING (true);
+
+CREATE POLICY "Allow public select" ON expenses FOR SELECT USING (true);
+CREATE POLICY "Allow public insert" ON expenses FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public update" ON expenses FOR UPDATE USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public delete" ON expenses FOR DELETE USING (true);
+
+CREATE POLICY "Allow public select" ON activity FOR SELECT USING (true);
+CREATE POLICY "Allow public insert" ON activity FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public update" ON activity FOR UPDATE USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public delete" ON activity FOR DELETE USING (true);

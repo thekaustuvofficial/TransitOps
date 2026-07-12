@@ -52,7 +52,7 @@ function AppContent() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   // Backend Toggle State
-  const [useBackend, setUseBackend] = useState(false);
+  const [useBackend, setUseBackend] = useState(true);
   useEffect(() => {
     db.useBackend = useBackend;
     if (useBackend) {
@@ -200,7 +200,7 @@ function AppContent() {
           </div>
 
           <div className="text-[10px] font-display text-[var(--color-text-faint)]">
-            TRANSITOPS © 2026 • GUJARAT LOGISTICS PORTAL
+            TRANSITOPS © 2026 • SMART TRANSPORT OPERATIONS PLATFORM
           </div>
         </div>
 
@@ -326,7 +326,7 @@ function AppContent() {
           </div>
           <div>
             <h2 className="font-display text-sm font-bold tracking-tight text-[var(--color-text)]">TransitOps</h2>
-            <span className="text-[10px] font-semibold text-orange-500 tracking-tight">Gujarat Logistics</span>
+            <span className="text-[10px] font-semibold text-orange-500 tracking-tight">Operations Portal</span>
           </div>
         </div>
 
