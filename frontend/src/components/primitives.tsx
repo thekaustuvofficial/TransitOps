@@ -1,10 +1,14 @@
 import { type ReactNode, type SelectHTMLAttributes, type InputHTMLAttributes, type ButtonHTMLAttributes, forwardRef, useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X, ChevronDown, Check } from 'lucide-react';
 
 export function cx(...parts: (string | false | null | undefined)[]) {
   return parts.filter(Boolean).join(' ');
 }
 
+// ---- Portal Dropdown Select -------------------------------------------------
+// Renders the dropdown via a React portal at document.body so it's never
+// clipped by overflow:hidden / overflow-x-auto ancestor containers.
 export function CustomSelect({ value, onChange, options, placeholder, className }: {
   value: string;
   onChange: (val: string) => void;
@@ -13,33 +17,69 @@ export function CustomSelect({ value, onChange, options, placeholder, className 
   className?: string;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [dropPos, setDropPos] = useState({ top: 0, left: 0, width: 0 });
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const dropRef = useRef<HTMLDivElement>(null);
 
+  // Recompute position whenever opening
+  const openDropdown = () => {
+    if (buttonRef.current) {
+      const r = buttonRef.current.getBoundingClientRect();
+      setDropPos({
+        top: r.bottom + window.scrollY + 4,
+        left: r.left + window.scrollX,
+        width: r.width,
+      });
+    }
+    setIsOpen(true);
+  };
+
+  // Close on outside click
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+    if (!isOpen) return;
+    const handleDown = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (
+        buttonRef.current && !buttonRef.current.contains(target) &&
+        dropRef.current && !dropRef.current.contains(target)
+      ) {
         setIsOpen(false);
       }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    };
+    // Close on scroll so the dropdown doesn't float away
+    const handleScroll = () => setIsOpen(false);
+    document.addEventListener('mousedown', handleDown);
+    window.addEventListener('scroll', handleScroll, true);
+    return () => {
+      document.removeEventListener('mousedown', handleDown);
+      window.removeEventListener('scroll', handleScroll, true);
+    };
+  }, [isOpen]);
 
   const selectedOpt = options.find(o => o.value === value);
 
   return (
-    <div className={cx("relative w-full text-left font-sans", className)} ref={containerRef}>
+    <div className={cx('relative w-full text-left font-sans', className)}>
       <button
+        ref={buttonRef}
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex w-full items-center justify-between rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-2.5 text-sm text-[var(--color-text)] cursor-pointer hover:border-orange-500/50 focus:border-orange-500/80 focus:outline-none focus:ring-4 focus:ring-orange-500/10 transition-all duration-200"
+        onClick={() => isOpen ? setIsOpen(false) : openDropdown()}
+        className="flex w-full items-center justify-between rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-2 text-xs text-[var(--color-text)] cursor-pointer hover:border-orange-500/50 focus:border-orange-500/80 focus:outline-none focus:ring-4 focus:ring-orange-500/10 transition-all duration-200"
       >
-        <span className="truncate text-[var(--color-text)]">{selectedOpt ? selectedOpt.label : placeholder || "Select..."}</span>
-        <ChevronDown className={cx("ml-2 h-3.5 w-3.5 shrink-0 text-[var(--color-text-faint)] transition-transform duration-200", isOpen && "rotate-180")} />
+        <span className="truncate text-[var(--color-text)]">{selectedOpt ? selectedOpt.label : placeholder || 'Select...'}</span>
+        <ChevronDown className={cx('ml-2 h-3.5 w-3.5 shrink-0 text-[var(--color-text-faint)] transition-transform duration-200', isOpen && 'rotate-180')} />
       </button>
 
-      {isOpen && (
-        <div className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)] py-1 shadow-xl animate-slide-in">
+      {isOpen && createPortal(
+        <div
+          ref={dropRef}
+          className="fixed z-[9999] max-h-60 overflow-auto rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)] py-1 shadow-2xl animate-slide-in"
+          style={{
+            top: dropPos.top,
+            left: dropPos.left,
+            width: dropPos.width,
+          }}
+        >
           {options.map((opt) => (
             <button
               key={opt.value}
@@ -49,15 +89,16 @@ export function CustomSelect({ value, onChange, options, placeholder, className 
                 setIsOpen(false);
               }}
               className={cx(
-                "flex w-full items-center justify-between px-3 py-2 text-sm text-left hover:bg-[var(--color-panel-2)] transition-colors",
-                opt.value === value ? "text-orange-500 font-semibold bg-orange-500/5" : "text-[var(--color-text-muted)]"
+                'flex w-full items-center justify-between px-3 py-2 text-xs text-left hover:bg-[var(--color-panel-2)] transition-colors',
+                opt.value === value ? 'text-orange-500 font-semibold bg-orange-500/5' : 'text-[var(--color-text-muted)]'
               )}
             >
               <span>{opt.label}</span>
-              {opt.value === value && <Check size={12} className="text-orange-500" />}
+              {opt.value === value && <Check size={11} className="text-orange-500 shrink-0" />}
             </button>
           ))}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
@@ -185,10 +226,10 @@ export function Modal({ open, onClose, title, children, width = 'max-w-lg' }: {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
       {/* Backdrop */}
-      <button 
-        aria-label="Close" 
-        onClick={onClose} 
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity duration-300" 
+      <button
+        aria-label="Close"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity duration-300"
       />
       {/* Panel */}
       <div className={cx(
@@ -199,9 +240,9 @@ export function Modal({ open, onClose, title, children, width = 'max-w-lg' }: {
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[var(--color-border)] px-6 py-4 bg-[var(--color-panel-2)]">
           <h2 className="font-display text-sm font-bold tracking-tight text-[var(--color-text)]">{title}</h2>
-          <button 
-            onClick={onClose} 
-            className="rounded-lg p-1.5 text-[var(--color-text-muted)] hover:bg-[var(--color-border)] hover:text-[var(--color-text)] transition-all" 
+          <button
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-[var(--color-text-muted)] hover:bg-[var(--color-border)] hover:text-[var(--color-text)] transition-all"
             aria-label="Close"
           >
             <X size={15} />

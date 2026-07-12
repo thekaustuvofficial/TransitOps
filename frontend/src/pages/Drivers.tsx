@@ -240,8 +240,8 @@ export default function Drivers() {
       </div>
 
       {/* Filter and Search Panel */}
-      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 border-b border-[var(--color-border)] pb-6">
-        <div className="w-full xl:max-w-xs shrink-0 relative">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--color-border)] pb-5">
+        <div className="relative min-w-[200px] flex-1 max-w-xs shrink-0">
           <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-[var(--color-text-faint)]">
             <Search size={14} />
           </span>
@@ -254,23 +254,32 @@ export default function Drivers() {
           />
         </div>
 
-        <div className="flex flex-nowrap items-center gap-3 overflow-x-auto hide-scrollbar w-full xl:w-auto pb-2 xl:pb-0">
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-faint)] shrink-0 px-2 flex items-center gap-1.5">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-faint)] flex items-center gap-1.5 shrink-0">
             <SlidersHorizontal size={12} />
             Filters
           </span>
-          <CustomSelect
-            value={statusFilter}
-            onChange={(val) => setStatusFilter(val)}
-            options={[
-              { value: 'All', label: 'All Statuses' },
-              { value: 'Available', label: 'Available' },
-              { value: 'On Trip', label: 'On Trip' },
-              { value: 'Off Duty', label: 'Off Duty' },
-              { value: 'Suspended', label: 'Suspended' }
-            ]}
-            className="w-40 shrink-0"
-          />
+          <div className="w-40 shrink-0">
+            <CustomSelect
+              value={statusFilter}
+              onChange={(val) => setStatusFilter(val)}
+              options={[
+                { value: 'All', label: 'All Statuses' },
+                { value: 'Available', label: 'Available' },
+                { value: 'On Trip', label: 'On Trip' },
+                { value: 'Off Duty', label: 'Off Duty' },
+                { value: 'Suspended', label: 'Suspended' }
+              ]}
+            />
+          </div>
+          {(statusFilter !== 'All' || searchQuery) && (
+            <button
+              onClick={() => { setStatusFilter('All'); setSearchQuery(''); }}
+              className="text-[10px] font-semibold text-orange-500 hover:text-orange-400 border border-orange-500/30 rounded-lg px-2.5 py-2 transition-colors shrink-0"
+            >
+              Reset
+            </button>
+          )}
         </div>
       </div>
 

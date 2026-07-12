@@ -113,10 +113,10 @@ export default function Dashboard() {
   return (
     <div className="flex flex-col gap-5 animate-fade-in h-full">
 
-      {/* ── Single-line Filter Bar ── */}
-      <div className="flex items-center gap-2 flex-nowrap overflow-x-auto hide-scrollbar shrink-0">
+      {/* ── Filter Bar — wraps naturally, never scrolls ── */}
+      <div className="flex flex-wrap items-center gap-2 shrink-0">
         {/* Search */}
-        <div className="relative shrink-0 w-56">
+        <div className="relative min-w-[180px] flex-1 max-w-xs">
           <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-faint)] pointer-events-none" />
           <input
             type="text"
@@ -126,34 +126,45 @@ export default function Dashboard() {
             className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)] pl-8 pr-3 py-2 text-xs text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:border-orange-500 focus:outline-none focus:ring-4 focus:ring-orange-500/10 transition-all"
           />
         </div>
-        <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-faint)] shrink-0 pl-1">Filters:</span>
-        <CustomSelect value={vehicleType} onChange={setVehicleType}
-          options={[
-            { value: 'All', label: 'All Types' },
-            { value: 'Van', label: 'Van' },
-            { value: 'Truck', label: 'Truck' },
-            { value: 'Mini', label: 'Mini' },
-          ]}
-          className="w-32 shrink-0"
-        />
-        <CustomSelect value={vehicleStatus} onChange={setVehicleStatus}
-          options={[
-            { value: 'All', label: 'All Statuses' },
-            { value: 'Available', label: 'Available' },
-            { value: 'On Trip', label: 'On Trip' },
-            { value: 'In Shop', label: 'In Shop' },
-            { value: 'Retired', label: 'Retired' },
-          ]}
-          className="w-36 shrink-0"
-        />
-        {regions.length > 0 && (
-          <CustomSelect value={region} onChange={setRegion}
+        <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-faint)] pl-1 shrink-0">Filters:</span>
+        <div className="w-36 shrink-0">
+          <CustomSelect value={vehicleType} onChange={setVehicleType}
             options={[
-              { value: 'All', label: 'All Regions' },
-              ...regions.map((r) => ({ value: r, label: r })),
+              { value: 'All', label: 'All Types' },
+              { value: 'Van', label: 'Van' },
+              { value: 'Truck', label: 'Truck' },
+              { value: 'Mini', label: 'Mini' },
             ]}
-            className="w-36 shrink-0"
           />
+        </div>
+        <div className="w-40 shrink-0">
+          <CustomSelect value={vehicleStatus} onChange={setVehicleStatus}
+            options={[
+              { value: 'All', label: 'All Statuses' },
+              { value: 'Available', label: 'Available' },
+              { value: 'On Trip', label: 'On Trip' },
+              { value: 'In Shop', label: 'In Shop' },
+              { value: 'Retired', label: 'Retired' },
+            ]}
+          />
+        </div>
+        {regions.length > 0 && (
+          <div className="w-40 shrink-0">
+            <CustomSelect value={region} onChange={setRegion}
+              options={[
+                { value: 'All', label: 'All Regions' },
+                ...regions.map((r) => ({ value: r, label: r })),
+              ]}
+            />
+          </div>
+        )}
+        {(vehicleType !== 'All' || vehicleStatus !== 'All' || region !== 'All' || searchQuery) && (
+          <button
+            onClick={() => { setVehicleType('All'); setVehicleStatus('All'); setRegion('All'); setSearchQuery(''); }}
+            className="text-[10px] font-semibold text-orange-500 hover:text-orange-400 border border-orange-500/30 rounded-lg px-2.5 py-2 transition-colors shrink-0"
+          >
+            Reset
+          </button>
         )}
       </div>
 
