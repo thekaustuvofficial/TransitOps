@@ -11,7 +11,7 @@ export default function Settings() {
   const toast = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const roles: Role[] = ['fleet_manager', 'driver', 'safety_officer', 'financial_analyst'];
+  const roles: Role[] = ['fleet_manager', 'dispatcher', 'safety_officer', 'financial_analyst'];
   const modules: { id: Module; label: string; desc: string }[] = [
     { id: 'fleet', label: 'Fleet Registry', desc: 'Add, edit, retire vehicles and check maintenance triggers' },
     { id: 'drivers', label: 'Drivers Registry', desc: 'Manage driver records, categories, and license compliance' },

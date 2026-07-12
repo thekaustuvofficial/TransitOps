@@ -125,7 +125,8 @@ export default function Fleet() {
     setAcqCost(v.acquisition_cost);
     setRegion(v.region);
     setCurrentLocation(v.current_location);
-    setInsuranceExpiry(new Date(v.insurance_expiry).toISOString().slice(0, 10));
+    const insDate = new Date(v.insurance_expiry);
+    setInsuranceExpiry(isNaN(insDate.getTime()) ? '' : insDate.toISOString().slice(0, 10));
     setStatus(v.status);
     setErrorMsg(null);
     setModalOpen(true);
@@ -349,7 +350,7 @@ export default function Fleet() {
                       <div className="text-[10px] text-[var(--color-text-faint)] mt-0.5">{veh.current_location || '—'}</div>
                     </td>
                     <td className="px-6 py-4 font-mono text-xs">
-                      {new Date(veh.insurance_expiry).toISOString().slice(0, 10)}
+                      {(() => { const d = new Date(veh.insurance_expiry); return isNaN(d.getTime()) ? '—' : d.toISOString().slice(0, 10); })()}
                     </td>
                     <td className="px-6 py-4">
                       {getStatusBadge(veh)}

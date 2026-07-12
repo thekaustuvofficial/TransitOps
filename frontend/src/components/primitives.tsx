@@ -1,5 +1,5 @@
 import { type ReactNode, type SelectHTMLAttributes, type InputHTMLAttributes, type ButtonHTMLAttributes, forwardRef, useState, useEffect, useRef } from 'react';
-import { X } from 'lucide-react';
+import { X, ChevronDown, Check } from 'lucide-react';
 
 export function cx(...parts: (string | false | null | undefined)[]) {
   return parts.filter(Boolean).join(' ');
@@ -34,14 +34,12 @@ export function CustomSelect({ value, onChange, options, placeholder, className 
         onClick={() => setIsOpen(!isOpen)}
         className="flex w-full items-center justify-between rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-2.5 text-sm text-[var(--color-text)] cursor-pointer hover:border-orange-500/50 focus:border-orange-500/80 focus:outline-none focus:ring-4 focus:ring-orange-500/10 transition-all duration-200"
       >
-        <span className="truncate">{selectedOpt ? selectedOpt.label : placeholder || "Select..."}</span>
-        <svg className={cx("ml-2 h-4 w-4 shrink-0 text-[var(--color-text-faint)] transition-transform duration-200", isOpen && "rotate-180")} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
+        <span className="truncate text-[var(--color-text)]">{selectedOpt ? selectedOpt.label : placeholder || "Select..."}</span>
+        <ChevronDown className={cx("ml-2 h-3.5 w-3.5 shrink-0 text-[var(--color-text-faint)] transition-transform duration-200", isOpen && "rotate-180")} />
       </button>
 
       {isOpen && (
-        <div className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)] py-1 shadow-lg animate-slide-in">
+        <div className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)] py-1 shadow-xl animate-slide-in">
           {options.map((opt) => (
             <button
               key={opt.value}
@@ -51,11 +49,12 @@ export function CustomSelect({ value, onChange, options, placeholder, className 
                 setIsOpen(false);
               }}
               className={cx(
-                "flex w-full items-center px-3 py-2 text-sm text-left hover:bg-[var(--color-panel-2)] transition-colors",
+                "flex w-full items-center justify-between px-3 py-2 text-sm text-left hover:bg-[var(--color-panel-2)] transition-colors",
                 opt.value === value ? "text-orange-500 font-semibold bg-orange-500/5" : "text-[var(--color-text-muted)]"
               )}
             >
-              {opt.label}
+              <span>{opt.label}</span>
+              {opt.value === value && <Check size={12} className="text-orange-500" />}
             </button>
           ))}
         </div>
@@ -83,7 +82,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     <button
       ref={ref}
       className={cx(
-        'inline-flex items-center justify-center gap-2 rounded-lg font-medium text-xs sm:text-sm disabled:cursor-not-allowed disabled:opacity-50 disabled:scale-100 focus-visible:ring-2 focus-visible:ring-orange-500/50',
+        'inline-flex items-center justify-center gap-2 rounded-lg font-medium text-xs sm:text-sm disabled:cursor-not-allowed disabled:opacity-40 disabled:scale-100 focus-visible:ring-2 focus-visible:ring-orange-500/50',
         size === 'sm' ? 'px-3 py-1.5 text-xs' : 'px-4 py-2.5',
         VARIANT_CLS[variant],
         className,
@@ -99,7 +98,7 @@ Button.displayName = 'Button';
 // ---- Input / Select / Form Field ---------------------------------------------
 export function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
-    <div className="space-y-1 text-left w-full">
+    <div className="space-y-1.5 text-left w-full">
       <span className="block text-xs font-semibold text-[var(--color-text-muted)] tracking-tight">{label}</span>
       {children}
       {hint && <span className="block text-[11px] text-[var(--color-text-faint)] leading-normal">{hint}</span>}
@@ -112,8 +111,8 @@ export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputE
     <input
       ref={ref}
       className={cx(
-        'w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-2.5 text-sm text-[var(--color-text)] placeholder:text-[var(--color-text-faint)]',
-        'focus:border-orange-500/80 focus:outline-none focus:ring-4 focus:ring-orange-500/10 transition-all duration-250',
+        'w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-panel-2)] px-3 py-2.5 text-sm text-[var(--color-text)] placeholder:text-[var(--color-text-faint)]',
+        'focus:border-orange-500/80 focus:bg-[var(--color-panel)] focus:outline-none focus:ring-4 focus:ring-orange-500/10 transition-all duration-200',
         className,
       )}
       {...rest}
@@ -127,8 +126,8 @@ export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSel
     <select
       ref={ref}
       className={cx(
-        'w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)] px-3 py-2.5 text-sm text-[var(--color-text)] cursor-pointer',
-        'focus:border-orange-500/80 focus:outline-none focus:ring-4 focus:ring-orange-500/10 transition-all duration-250',
+        'w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-panel-2)] px-3 py-2.5 text-sm text-[var(--color-text)] cursor-pointer appearance-none',
+        'focus:border-orange-500/80 focus:bg-[var(--color-panel)] focus:outline-none focus:ring-4 focus:ring-orange-500/10 transition-all duration-200',
         className,
       )}
       {...rest}
@@ -161,7 +160,7 @@ export function Badge({ children, color, className }: { children: ReactNode; col
   return (
     <span
       className={cx('inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold tracking-normal border font-display', className)}
-      style={{ color, backgroundColor: `${color}0a`, borderColor: `${color}25` }}
+      style={{ color, backgroundColor: `${color}18`, borderColor: `${color}30` }}
     >
       {children}
     </span>
@@ -172,19 +171,44 @@ export function Badge({ children, color, className }: { children: ReactNode; col
 export function Modal({ open, onClose, title, children, width = 'max-w-lg' }: {
   open: boolean; onClose: () => void; title: string; children: ReactNode; width?: string;
 }) {
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [open]);
+
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop with elegant blur */}
-      <button aria-label="Close" onClick={onClose} className="absolute inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300" />
-      <div className={cx('relative w-full animate-slide-in rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] shadow-2xl overflow-hidden', width)}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+      {/* Backdrop */}
+      <button 
+        aria-label="Close" 
+        onClick={onClose} 
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity duration-300" 
+      />
+      {/* Panel */}
+      <div className={cx(
+        'relative w-full animate-slide-in rounded-2xl overflow-hidden shadow-2xl',
+        'border border-[var(--color-border)] bg-[var(--color-panel)]',
+        width
+      )}>
+        {/* Header */}
         <div className="flex items-center justify-between border-b border-[var(--color-border)] px-6 py-4 bg-[var(--color-panel-2)]">
-          <h2 className="font-display text-sm font-semibold tracking-wide text-[var(--color-text)]">{title}</h2>
-          <button onClick={onClose} className="rounded-lg p-1.5 text-[var(--color-text-muted)] hover:bg-[var(--color-border-soft)] hover:text-[var(--color-text)] transition-all" aria-label="Close">
-            <X size={16} />
+          <h2 className="font-display text-sm font-bold tracking-tight text-[var(--color-text)]">{title}</h2>
+          <button 
+            onClick={onClose} 
+            className="rounded-lg p-1.5 text-[var(--color-text-muted)] hover:bg-[var(--color-border)] hover:text-[var(--color-text)] transition-all" 
+            aria-label="Close"
+          >
+            <X size={15} />
           </button>
         </div>
-        <div className="max-h-[75vh] overflow-y-auto px-6 py-6">{children}</div>
+        {/* Body — scrolls internally, never overflows the viewport */}
+        <div className="max-h-[calc(90vh-60px)] overflow-y-auto px-6 py-5">{children}</div>
       </div>
     </div>
   );
@@ -203,9 +227,9 @@ export function EmptyState({ title, detail }: { title: string; detail?: string }
 // ---- Inline banner (rule violation / success) ---------------------------------
 export function Banner({ tone, children }: { tone: 'error' | 'success' | 'info'; children: ReactNode }) {
   const cls = {
-    error: 'border-red-500/20 bg-red-500/5 text-red-600 dark:text-red-400',
-    success: 'border-emerald-500/20 bg-emerald-500/5 text-emerald-600 dark:text-emerald-400',
-    info: 'border-blue-500/20 bg-blue-500/5 text-blue-600 dark:text-blue-400',
+    error:   'border-red-500/25 bg-red-500/8 text-red-500 dark:text-red-400',
+    success: 'border-emerald-500/25 bg-emerald-500/8 text-emerald-600 dark:text-emerald-400',
+    info:    'border-blue-500/25 bg-blue-500/8 text-blue-500 dark:text-blue-300',
   }[tone];
-  return <div className={cx('rounded-lg border px-4 py-3 text-xs sm:text-sm leading-relaxed', cls)}>{children}</div>;
+  return <div className={cx('rounded-xl border px-4 py-3 text-xs sm:text-sm leading-relaxed', cls)}>{children}</div>;
 }

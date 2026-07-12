@@ -3,12 +3,90 @@ import { useDb } from '../hooks/useDb';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { canEdit } from '../lib/permissions';
-import { StatusBadge } from '../components/StatusBadge';
 import { Button, Card, Input, Select, Field, Modal, Banner } from '../components/primitives';
 import { RuleViolation } from '../lib/db';
 import { fmtCurrency, fmtNumber } from '../lib/format';
-import { Navigation, Plus, Send, CheckSquare, XCircle, ArrowRight } from 'lucide-react';
+import {
+  Navigation, Plus, Send, CheckSquare, XCircle,
+  MapPin, Package, Truck, User, Clock, CheckCircle2, Circle, Ban
+} from 'lucide-react';
 
+/** Trip Lifecycle Timeline — visual inspired by the reference design */
+function TripLifecycle({ status }: { status: string }) {
+  const steps = [
+    { key: 'Draft',      label: 'Draft',      icon: Circle },
+    { key: 'Dispatched', label: 'Dispatched',  icon: Truck },
+    { key: 'Completed',  label: 'Completed',   icon: CheckCircle2 },
+  ];
+
+  // Cancelled is a terminal branch state
+  const isCancelled = status === 'Cancelled';
+  
+  const getStepState = (stepKey: string): 'completed' | 'active' | 'upcoming' => {
+    if (isCancelled) {
+      if (stepKey === 'Draft') return 'completed';
+      return 'upcoming';
+    }
+    const order = ['Draft', 'Dispatched', 'Completed'];
+    const currentIdx = order.indexOf(status);
+    const stepIdx = order.indexOf(stepKey);
+    if (stepIdx < currentIdx) return 'completed';
+    if (stepIdx === currentIdx) return 'active';
+    return 'upcoming';
+  };
+
+  return (
+    <div className="flex items-center gap-0 w-full">
+      {steps.map((step, i) => {
+        const state = getStepState(step.key);
+        const Icon = step.icon;
+        return (
+          <div key={step.key} className="flex items-center flex-1 min-w-0">
+            <div className="flex flex-col items-center gap-1.5 shrink-0">
+              <div className={`
+                flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all duration-500
+                ${state === 'completed' ? 'bg-emerald-500 border-emerald-500 text-white' : ''}
+                ${state === 'active' && !isCancelled ? 'bg-orange-500 border-orange-500 text-white shadow-lg shadow-orange-500/40' : ''}
+                ${state === 'upcoming' && !isCancelled ? 'bg-[var(--color-panel-2)] border-[var(--color-border)] text-[var(--color-text-faint)]' : ''}
+                ${state === 'upcoming' && isCancelled ? 'bg-[var(--color-panel-2)] border-[var(--color-border)] text-[var(--color-text-faint)] opacity-40' : ''}
+              `}>
+                {state === 'completed' ? (
+                  <CheckCircle2 size={14} />
+                ) : (
+                  <Icon size={14} className={state === 'active' ? 'animate-pulse' : ''} />
+                )}
+              </div>
+              <span className={`text-[9px] font-bold uppercase tracking-wider whitespace-nowrap transition-colors duration-300 ${
+                state === 'active' ? 'text-orange-500' :
+                state === 'completed' ? 'text-emerald-500' :
+                'text-[var(--color-text-faint)]'
+              }`}>
+                {step.label}
+              </span>
+            </div>
+            {/* Connector line */}
+            {i < steps.length - 1 && (
+              <div className={`flex-1 h-0.5 mx-2 mt-[-14px] rounded-full transition-all duration-700 ${
+                getStepState(steps[i + 1].key) !== 'upcoming' || (isCancelled && step.key === 'Draft') 
+                  ? 'bg-emerald-500' 
+                  : 'bg-[var(--color-border)]'
+              }`} />
+            )}
+          </div>
+        );
+      })}
+      {/* Cancelled indicator */}
+      {isCancelled && (
+        <div className="flex flex-col items-center gap-1.5 shrink-0 ml-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 bg-red-500/15 border-red-500/40 text-red-500">
+            <Ban size={13} />
+          </div>
+          <span className="text-[9px] font-bold uppercase tracking-wider text-red-500">Cancelled</span>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Trips() {
   const db = useDb();
@@ -17,10 +95,10 @@ export default function Trips() {
 
   const isEditable = user ? canEdit(user.role, 'trips') : false;
 
-  // Active select state for inspector
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
 
   // Create Trip States
+  const [createModalOpen, setCreateModalOpen] = useState(false);
   const [source, setSource] = useState('');
   const [destination, setDestination] = useState('');
   const [cargoWeight, setCargoWeight] = useState(100);
@@ -51,46 +129,19 @@ export default function Trips() {
     e.preventDefault();
     if (!user) return;
     setFormErrorMsg(null);
-
-    if (!source || !destination) {
-      setFormErrorMsg('Source and Destination are required.');
-      return;
-    }
-
+    if (!source || !destination) { setFormErrorMsg('Source and Destination are required.'); return; }
     try {
-      const trip = db.createTripDraft(user, {
-        source,
-        destination,
-        cargo_weight_kg: cargoWeight,
-        planned_distance_km: plannedDistance,
-        revenue,
-      });
+      const trip = db.createTripDraft(user, { source, destination, cargo_weight_kg: cargoWeight, planned_distance_km: plannedDistance, revenue });
       toast.push('success', `Trip ${trip.trip_code} created as Draft.`);
       setSelectedTripId(trip.id);
-      // Reset form
-      setSource('');
-      setDestination('');
-      setCargoWeight(100);
-      setPlannedDistance(10);
-      setRevenue(5000);
+      setCreateModalOpen(false);
+      setSource(''); setDestination(''); setCargoWeight(100); setPlannedDistance(10); setRevenue(5000);
     } catch (err) {
       setFormErrorMsg(err instanceof Error ? err.message : 'Failed to create trip.');
     }
   };
 
-  // Dispatch Form Setup
-  const openDispatch = () => {
-    setDispatchVehicleId('');
-    setDispatchDriverId('');
-    setDispatchErrorMsg(null);
-    setDispatchModalOpen(true);
-  };
-
-  // Dispatch Assist: Compute Eligible Assets
-  // Rule: Vehicles/Drivers status must be Available, driver license not expired, capacity >= cargo
   const eligibleVehicles = vehicles.filter((v) => {
-    // Show only Available vehicles. 
-    // Wait, for smart assist, we also filter by max capacity >= cargo weight!
     if (v.status !== 'Available') return false;
     if (selectedTrip && v.max_capacity_kg < selectedTrip.cargo_weight_kg) return false;
     return true;
@@ -98,40 +149,37 @@ export default function Trips() {
 
   const eligibleDrivers = drivers.filter((d) => {
     if (d.status !== 'Available') return false;
-    // Expiry check
     if (new Date(d.license_expiry) <= new Date()) return false;
     return true;
   });
+
+  const openDispatch = () => {
+    setDispatchVehicleId('');
+    setDispatchDriverId('');
+    setDispatchErrorMsg(null);
+    setDispatchModalOpen(true);
+  };
 
   const handleDispatch = (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !selectedTripId) return;
     setDispatchErrorMsg(null);
-
-    if (!dispatchVehicleId || !dispatchDriverId) {
-      setDispatchErrorMsg('Please select a vehicle and a driver.');
-      return;
-    }
-
+    if (!dispatchVehicleId || !dispatchDriverId) { setDispatchErrorMsg('Please select a vehicle and a driver.'); return; }
     try {
       db.dispatchTrip(user, selectedTripId, dispatchVehicleId, dispatchDriverId);
-      toast.push('success', `Trip dispatched successfully.`);
+      toast.push('success', 'Trip dispatched successfully.');
       setDispatchModalOpen(false);
     } catch (err) {
-      if (err instanceof RuleViolation) {
-        setDispatchErrorMsg(err.message);
-      } else {
-        setDispatchErrorMsg('An unexpected error occurred.');
-      }
+      if (err instanceof RuleViolation) setDispatchErrorMsg(err.message);
+      else setDispatchErrorMsg('An unexpected error occurred.');
     }
   };
 
-  // Complete Form Setup
   const openComplete = () => {
     if (!selectedTrip) return;
     const vehicle = vehicles.find((v) => v.id === selectedTrip.vehicle_id);
     setFinalOdometer(vehicle ? vehicle.odometer_km + selectedTrip.planned_distance_km : 0);
-    setFuelConsumed(Math.round(selectedTrip.planned_distance_km * 0.15)); // rough guess
+    setFuelConsumed(Math.round(selectedTrip.planned_distance_km * 0.15));
     setCompleteErrorMsg(null);
     setCompleteModalOpen(true);
   };
@@ -140,403 +188,406 @@ export default function Trips() {
     e.preventDefault();
     if (!user || !selectedTripId) return;
     setCompleteErrorMsg(null);
-
     const vehicle = vehicles.find((v) => v.id === selectedTrip?.vehicle_id);
     if (vehicle && finalOdometer < vehicle.odometer_km) {
-      setCompleteErrorMsg(`Final odometer cannot be less than vehicle's current odometer (${fmtNumber(vehicle.odometer_km)} km).`);
+      setCompleteErrorMsg(`Final odometer must be ≥ ${fmtNumber(vehicle.odometer_km)} km.`);
       return;
     }
-
     try {
       db.completeTrip(user, selectedTripId, finalOdometer, fuelConsumed);
-      toast.push('success', `Trip marked as Completed.`);
+      toast.push('success', 'Trip marked as Completed.');
       setCompleteModalOpen(false);
     } catch (err) {
       setCompleteErrorMsg(err instanceof Error ? err.message : 'Failed to complete trip.');
     }
   };
 
-  // Cancel Handler
   const handleCancel = () => {
     if (!user || !selectedTripId) return;
     if (!window.confirm('Are you sure you want to cancel this trip?')) return;
     try {
       db.cancelTrip(user, selectedTripId);
-      toast.push('success', `Trip cancelled.`);
+      toast.push('success', 'Trip cancelled.');
     } catch (err) {
       toast.push('error', err instanceof Error ? err.message : 'Failed to cancel trip.');
     }
   };
 
+  const getStatusBg = (status: string) => {
+    switch (status) {
+      case 'Draft':      return 'border-[var(--color-border)] bg-[var(--color-panel-2)]';
+      case 'Dispatched': return 'border-blue-500/30 bg-blue-500/5';
+      case 'Completed':  return 'border-emerald-500/30 bg-emerald-500/5';
+      case 'Cancelled':  return 'border-red-500/20 bg-red-500/5';
+      default:           return 'border-[var(--color-border)] bg-[var(--color-panel-2)]';
+    }
+  };
+
+  const getStatusDot = (status: string) => {
+    switch (status) {
+      case 'Draft':      return 'bg-amber-400';
+      case 'Dispatched': return 'bg-blue-500 animate-pulse';
+      case 'Completed':  return 'bg-emerald-500';
+      case 'Cancelled':  return 'bg-red-500';
+      default:           return 'bg-slate-400';
+    }
+  };
+
   return (
-    <div className="space-y-6 animate-rise-in">
+    <div className="flex flex-col gap-5 h-full animate-rise-in">
       {/* Page Header */}
-      <div>
-        <h1 className="font-display text-xl font-bold tracking-tight text-[var(--color-text)] sm:text-2xl">
-          Trip Management
-        </h1>
-        <p className="text-xs text-[var(--color-text-muted)]">
-          Draft new trips, assign eligible vehicles & drivers with smart capacity checking, and complete dispatch routes.
-        </p>
+      <div className="flex items-center justify-between shrink-0">
+        <div>
+          <h1 className="font-display text-xl font-bold tracking-tight text-[var(--color-text)]">
+            Trip Management
+          </h1>
+          <p className="text-xs text-[var(--color-text-muted)] mt-0.5">
+            Draft routes, dispatch assets with smart capacity checking, and complete operations.
+          </p>
+        </div>
+        {isEditable && (
+          <Button onClick={() => setCreateModalOpen(true)} className="shrink-0">
+            <Plus size={15} />
+            New Trip
+          </Button>
+        )}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-12">
-        {/* Left Side: Creation Form / Inspector */}
-        <div className="lg:col-span-5 space-y-6">
-          {/* Create Trip Card */}
-          {isEditable && (
-            <Card className="p-5 border-[var(--color-border)] bg-[var(--color-panel)]">
-              <h2 className="font-display text-sm font-bold tracking-tight text-[var(--color-text)]">
-                Create Trip Route
+      {/* Main Grid */}
+      <div className="grid gap-4 lg:grid-cols-12 flex-1 min-h-0">
+
+        {/* Left: Operations Live Board */}
+        <div className="lg:col-span-7 min-h-0 flex flex-col">
+          <Card className="flex flex-col border-[var(--color-border)] bg-[var(--color-panel)] min-h-0 h-full overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-[var(--color-border)] bg-[var(--color-panel-2)] shrink-0">
+              <h2 className="font-display text-xs font-bold uppercase tracking-widest text-[var(--color-text)]">
+                Operations Live Board
               </h2>
-              <form onSubmit={handleCreateTrip} className="space-y-4">
-                {formErrorMsg && <Banner tone="error">{formErrorMsg}</Banner>}
+              <span className="text-[10px] font-mono text-[var(--color-text-faint)]">{trips.length} routes</span>
+            </div>
 
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Field label="Source Depot">
-                    <Input
-                      required
-                      value={source}
-                      onChange={(e) => setSource(e.target.value)}
-                      placeholder="e.g. Gandhinagar Depot"
-                    />
-                  </Field>
-
-                  <Field label="Destination Hub">
-                    <Input
-                      required
-                      value={destination}
-                      onChange={(e) => setDestination(e.target.value)}
-                      placeholder="e.g. Ahmedabad Hub"
-                    />
-                  </Field>
-                </div>
-
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <Field label="Cargo Weight (kg)">
-                    <Input
-                      required
-                      type="number"
-                      min={1}
-                      value={cargoWeight}
-                      onChange={(e) => setCargoWeight(Number(e.target.value))}
-                    />
-                  </Field>
-
-                  <Field label="Planned Distance (km)">
-                    <Input
-                      required
-                      type="number"
-                      min={1}
-                      value={plannedDistance}
-                      onChange={(e) => setPlannedDistance(Number(e.target.value))}
-                    />
-                  </Field>
-
-                  <Field label="Revenue (₹)">
-                    <Input
-                      required
-                      type="number"
-                      min={0}
-                      value={revenue}
-                      onChange={(e) => setRevenue(Number(e.target.value))}
-                    />
-                  </Field>
-                </div>
-
-                <Button type="submit" className="w-full font-display">
-                  <Plus size={16} />
-                  Draft Route
-                </Button>
-              </form>
-            </Card>
-          )}
-
-          {/* Trip Inspector / State Controller */}
-          {selectedTrip ? (
-            <Card className="p-5 border-[var(--color-border)] bg-[var(--color-panel)]" accent={selectedTrip.status === 'Draft' ? 'var(--color-status-draft)' : selectedTrip.status === 'Dispatched' ? 'var(--color-status-ontrip)' : 'var(--color-status-available)'}>
-              <div className="mb-4 flex items-center justify-between">
-                <div>
-                  <span className="text-[10px] font-bold text-[var(--color-text-faint)] tracking-tight">Selected Dispatch</span>
-                  <h3 className="font-mono text-base font-bold text-[var(--color-text)]">
-                    {selectedTrip.trip_code}
-                  </h3>
-                </div>
-                <StatusBadge status={selectedTrip.status} />
-              </div>
-
-              {/* Transition Status Flow Chart */}
-              <div className="mb-6 flex items-center justify-between rounded-lg border border-[var(--color-border)] bg-[var(--color-panel-2)] p-3 text-[10px]">
-                <div className="flex flex-col items-center">
-                  <span className={`h-2 w-2 rounded-full ${selectedTrip.status === 'Draft' ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`} />
-                  <span className="mt-1 font-semibold text-[var(--color-text)]">Draft</span>
-                </div>
-                <ArrowRight size={12} className="text-[var(--color-text-faint)]" />
-                <div className="flex flex-col items-center">
-                  <span className={`h-2 w-2 rounded-full ${selectedTrip.status === 'Dispatched' ? 'bg-blue-500 animate-pulse' : selectedTrip.status === 'Completed' || selectedTrip.status === 'Cancelled' ? 'bg-emerald-500' : 'bg-gray-700'}`} />
-                  <span className="mt-1 text-[var(--color-text-muted)]">Dispatched</span>
-                </div>
-                <ArrowRight size={12} className="text-[var(--color-text-faint)]" />
-                <div className="flex flex-col items-center">
-                  <span className={`h-2 w-2 rounded-full ${selectedTrip.status === 'Completed' ? 'bg-emerald-500' : selectedTrip.status === 'Cancelled' ? 'bg-red-500' : 'bg-gray-700'}`} />
-                  <span className="mt-1 text-[var(--color-text-muted)]">
-                    {selectedTrip.status === 'Cancelled' ? 'Cancelled' : 'Completed'}
-                  </span>
-                </div>
-              </div>
-
-              {/* Specifications */}
-              <div className="space-y-2.5 text-xs text-[var(--color-text-muted)]">
-                <div className="flex justify-between border-b border-[var(--color-border-soft)] pb-2">
-                  <span>Route</span>
-                  <span className="font-medium text-[var(--color-text)]">
-                    {selectedTrip.source} → {selectedTrip.destination}
-                  </span>
-                </div>
-                <div className="flex justify-between border-b border-[var(--color-border-soft)] pb-2">
-                  <span>Cargo Weight</span>
-                  <span className="font-mono font-medium text-[var(--color-text)]">
-                    {fmtNumber(selectedTrip.cargo_weight_kg)} kg
-                  </span>
-                </div>
-                <div className="flex justify-between border-b border-[var(--color-border-soft)] pb-2">
-                  <span>Revenue</span>
-                  <span className="font-mono font-medium text-[var(--color-text)]">
-                    {fmtCurrency(selectedTrip.revenue)}
-                  </span>
-                </div>
-
-                {selectedTrip.vehicle_id && (
-                  <div className="flex justify-between border-b border-[var(--color-border-soft)] pb-2">
-                    <span>Vehicle</span>
-                    <span className="font-medium text-[var(--color-text)]">
-                      {vehicles.find((v) => v.id === selectedTrip.vehicle_id)?.name} (
-                      {vehicles.find((v) => v.id === selectedTrip.vehicle_id)?.reg_no})
-                    </span>
-                  </div>
-                )}
-
-                {selectedTrip.driver_id && (
-                  <div className="flex justify-between border-b border-[var(--color-border-soft)] pb-2">
-                    <span>Driver Assigned</span>
-                    <span className="font-medium text-[var(--color-text)]">
-                      {drivers.find((d) => d.id === selectedTrip.driver_id)?.name}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* State Machine Transition Actions */}
-              {isEditable && (
-                <div className="mt-6 flex flex-wrap gap-2 pt-4 border-t border-[var(--color-border)]">
-                  {selectedTrip.status === 'Draft' && (
-                    <Button onClick={openDispatch} className="flex-1">
-                      <Send size={14} />
-                      Dispatch Asset
-                    </Button>
-                  )}
-
-                  {selectedTrip.status === 'Dispatched' && (
-                    <Button onClick={openComplete} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white">
-                      <CheckSquare size={14} />
-                      Complete Trip
-                    </Button>
-                  )}
-
-                  {(selectedTrip.status === 'Draft' || selectedTrip.status === 'Dispatched') && (
-                    <Button variant="danger" onClick={handleCancel}>
-                      <XCircle size={14} />
-                      Cancel
-                    </Button>
-                  )}
-                </div>
-              )}
-            </Card>
-          ) : (
-            <Card className="p-8 text-center border-[var(--color-border)] bg-[var(--color-panel)] text-[var(--color-text-faint)] text-xs">
-              <Navigation className="mx-auto mb-2 opacity-30" size={24} />
-              <span>Select an operation from the Live Board to review details and trigger transitions.</span>
-            </Card>
-          )}
-        </div>
-
-        {/* Right Side: Live Board */}
-        <div className="lg:col-span-7">
-          <Card className="p-5 border-[var(--color-border)] bg-[var(--color-panel)] h-full flex flex-col">
-            <h2 className="font-display mb-4 text-sm font-bold tracking-tight text-[var(--color-text)]">
-              Operations Board
-            </h2>
-
-            <div className="flex-1 space-y-3">
+            <div className="overflow-y-auto flex-1 p-3 space-y-2">
               {trips.map((trip) => {
                 const assignedVehicle = vehicles.find((v) => v.id === trip.vehicle_id);
-                const assignedDriver = drivers.find((d) => d.id === trip.driver_id);
+                const assignedDriver  = drivers.find((d) => d.id === trip.driver_id);
                 const isSelected = trip.id === selectedTripId;
 
                 return (
                   <div
                     key={trip.id}
-                    onClick={() => setSelectedTripId(trip.id)}
-                    className={`relative flex items-center justify-between rounded-lg border p-4 cursor-pointer transition-all duration-150 ${
+                    onClick={() => setSelectedTripId(isSelected ? null : trip.id)}
+                    className={`rounded-xl border p-4 cursor-pointer transition-all duration-200 hover:shadow-md ${
                       isSelected
-                        ? 'border-orange-500 bg-orange-500/5 shadow-xs'
-                        : 'border-[var(--color-border)] hover:border-[var(--color-text-faint)] bg-[var(--color-panel-2)]'
+                        ? 'border-orange-500/50 bg-orange-500/5 shadow-sm ring-1 ring-orange-500/20'
+                        : `${getStatusBg(trip.status)} hover:border-[var(--color-text-faint)]`
                     }`}
                   >
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-bold text-[var(--color-text)]">
-                          {trip.trip_code}
-                        </span>
-                        <StatusBadge status={trip.status} />
+                    {/* Trip header row */}
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <div className="flex items-center gap-2.5">
+                        <span className={`h-2 w-2 rounded-full shrink-0 mt-0.5 ${getStatusDot(trip.status)}`} />
+                        <div>
+                          <span className="font-mono text-xs font-bold text-[var(--color-text)]">{trip.trip_code}</span>
+                          <div className="flex items-center gap-1 text-[10px] text-[var(--color-text-muted)] mt-0.5">
+                            <MapPin size={9} />
+                            <span className="font-medium">{trip.source}</span>
+                            <span className="text-[var(--color-text-faint)]">→</span>
+                            <span className="font-medium">{trip.destination}</span>
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-xs text-[var(--color-text-muted)]">
-                        {trip.source} <span className="text-[var(--color-text-faint)]">→</span> {trip.destination}
-                      </div>
-                      <div className="flex flex-wrap gap-x-3 gap-y-1 pt-1.5 text-[10px] text-[var(--color-text-faint)] font-mono">
-                        <span>Cargo: {fmtNumber(trip.cargo_weight_kg)} kg</span>
-                        <span>Dist: {trip.planned_distance_km} km</span>
-                        {assignedVehicle && <span className="font-sans">Veh: {assignedVehicle.name}</span>}
-                        {assignedDriver && <span className="font-sans">Drv: {assignedDriver.name}</span>}
+                      <div className="text-right shrink-0">
+                        <div className="font-mono text-xs font-bold text-[var(--color-text)]">{fmtCurrency(trip.revenue)}</div>
+                        <div className="text-[10px] text-[var(--color-text-faint)] mt-0.5">{trip.planned_distance_km} km</div>
                       </div>
                     </div>
 
-                    <div className="text-right font-mono text-xs font-semibold text-[var(--color-text)]">
-                      {fmtCurrency(trip.revenue)}
+                    {/* Lifecycle Timeline */}
+                    <div className="mb-3">
+                      <TripLifecycle status={trip.status} />
+                    </div>
+
+                    {/* Footer meta */}
+                    <div className="flex items-center gap-3 text-[10px] text-[var(--color-text-faint)]">
+                      <span className="flex items-center gap-1">
+                        <Package size={9} />
+                        {fmtNumber(trip.cargo_weight_kg)} kg
+                      </span>
+                      {assignedVehicle && (
+                        <span className="flex items-center gap-1">
+                          <Truck size={9} />
+                          {assignedVehicle.name}
+                        </span>
+                      )}
+                      {assignedDriver && (
+                        <span className="flex items-center gap-1">
+                          <User size={9} />
+                          {assignedDriver.name}
+                        </span>
+                      )}
+                      {!assignedVehicle && !assignedDriver && (
+                        <span className="flex items-center gap-1">
+                          <Clock size={9} />
+                          Awaiting assignment
+                        </span>
+                      )}
                     </div>
                   </div>
                 );
               })}
 
               {trips.length === 0 && (
-                <div className="py-8 text-center text-xs text-[var(--color-text-faint)]">
-                  No trips registered in database.
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <Navigation className="mb-3 text-[var(--color-text-faint)] opacity-30" size={32} />
+                  <p className="text-sm font-semibold text-[var(--color-text-muted)]">No trips yet</p>
+                  <p className="text-xs text-[var(--color-text-faint)] mt-1">Create your first trip route to get started.</p>
                 </div>
               )}
             </div>
           </Card>
         </div>
+
+        {/* Right: Trip Inspector / State Controller */}
+        <div className="lg:col-span-5 min-h-0 flex flex-col">
+          {selectedTrip ? (
+            <Card className="flex flex-col border-[var(--color-border)] bg-[var(--color-panel)] h-full overflow-hidden" accent={
+              selectedTrip.status === 'Dispatched' ? '#3b82f6' :
+              selectedTrip.status === 'Completed' ? '#10b981' :
+              selectedTrip.status === 'Cancelled' ? '#ef4444' : '#f59e0b'
+            }>
+              {/* Inspector Header */}
+              <div className="px-5 py-4 border-b border-[var(--color-border)] bg-[var(--color-panel-2)] shrink-0">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <span className="text-[9px] font-bold uppercase tracking-widest text-[var(--color-text-faint)]">Selected Route</span>
+                    <h3 className="font-mono text-lg font-bold text-[var(--color-text)] leading-tight mt-0.5">
+                      {selectedTrip.trip_code}
+                    </h3>
+                  </div>
+                  <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${
+                    selectedTrip.status === 'Dispatched' ? 'bg-blue-500/15 text-blue-500 border border-blue-500/30' :
+                    selectedTrip.status === 'Completed' ? 'bg-emerald-500/15 text-emerald-600 border border-emerald-500/30' :
+                    selectedTrip.status === 'Cancelled' ? 'bg-red-500/15 text-red-500 border border-red-500/30' :
+                    'bg-amber-500/15 text-amber-600 border border-amber-500/30'
+                  }`}>
+                    <span className={`h-1.5 w-1.5 rounded-full ${getStatusDot(selectedTrip.status)}`} />
+                    {selectedTrip.status}
+                  </span>
+                </div>
+
+                {/* Lifecycle Timeline in Inspector */}
+                <div className="mt-4">
+                  <TripLifecycle status={selectedTrip.status} />
+                </div>
+              </div>
+
+              {/* Trip Details */}
+              <div className="flex-1 overflow-y-auto p-5 space-y-1">
+                {[
+                  { label: 'Route', value: `${selectedTrip.source} → ${selectedTrip.destination}` },
+                  { label: 'Cargo Weight', value: `${fmtNumber(selectedTrip.cargo_weight_kg)} kg`, mono: true },
+                  { label: 'Planned Distance', value: `${selectedTrip.planned_distance_km} km`, mono: true },
+                  { label: 'Revenue', value: fmtCurrency(selectedTrip.revenue), mono: true },
+                  ...(selectedTrip.vehicle_id ? [{
+                    label: 'Vehicle',
+                    value: (() => {
+                      const v = vehicles.find(v => v.id === selectedTrip.vehicle_id);
+                      return v ? `${v.name} (${v.reg_no})` : '—';
+                    })()
+                  }] : []),
+                  ...(selectedTrip.driver_id ? [{
+                    label: 'Driver',
+                    value: drivers.find(d => d.id === selectedTrip.driver_id)?.name || '—'
+                  }] : []),
+                ].map(({ label, value, mono }) => (
+                  <div key={label} className="flex items-center justify-between py-2.5 border-b border-[var(--color-border-soft)] last:border-0">
+                    <span className="text-xs text-[var(--color-text-muted)]">{label}</span>
+                    <span className={`text-xs font-semibold text-[var(--color-text)] ${mono ? 'font-mono' : ''}`}>{value}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Action Buttons */}
+              {isEditable && (
+                <div className="px-5 py-4 border-t border-[var(--color-border)] bg-[var(--color-panel-2)] shrink-0">
+                  <div className="flex gap-2">
+                    {selectedTrip.status === 'Draft' && (
+                      <Button onClick={openDispatch} className="flex-1">
+                        <Send size={13} />
+                        Dispatch
+                      </Button>
+                    )}
+                    {selectedTrip.status === 'Dispatched' && (
+                      <Button onClick={openComplete} className="flex-1 !bg-emerald-600 hover:!bg-emerald-500 !from-emerald-600 !to-emerald-600">
+                        <CheckSquare size={13} />
+                        Complete Route
+                      </Button>
+                    )}
+                    {(selectedTrip.status === 'Draft' || selectedTrip.status === 'Dispatched') && (
+                      <Button variant="danger" onClick={handleCancel}>
+                        <XCircle size={13} />
+                        Cancel
+                      </Button>
+                    )}
+                    {(selectedTrip.status === 'Completed' || selectedTrip.status === 'Cancelled') && (
+                      <p className="text-xs text-[var(--color-text-faint)] text-center w-full py-1">
+                        This trip is in a terminal state.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </Card>
+          ) : (
+            <Card className="flex flex-col items-center justify-center h-full min-h-[280px] border-[var(--color-border)] bg-[var(--color-panel)] p-8 text-center">
+              <div className="rounded-full bg-[var(--color-panel-2)] border border-[var(--color-border)] p-4 mb-4">
+                <Navigation className="text-[var(--color-text-faint)] opacity-40" size={28} />
+              </div>
+              <p className="text-sm font-semibold text-[var(--color-text-muted)]">Select a Route</p>
+              <p className="text-xs text-[var(--color-text-faint)] mt-1.5 max-w-[200px] leading-relaxed">
+                Click any trip from the Live Board to inspect and manage it.
+              </p>
+            </Card>
+          )}
+        </div>
       </div>
 
-      {/* Dispatch Asset Modal */}
+      {/* ── Create Trip Modal ── */}
+      <Modal
+        open={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        title="Create New Trip Route"
+        width="max-w-md"
+      >
+        <form onSubmit={handleCreateTrip} className="space-y-4">
+          {formErrorMsg && <Banner tone="error">{formErrorMsg}</Banner>}
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Source Depot">
+              <Input required value={source} onChange={(e) => setSource(e.target.value)} placeholder="e.g. Gandhinagar Depot" />
+            </Field>
+            <Field label="Destination Hub">
+              <Input required value={destination} onChange={(e) => setDestination(e.target.value)} placeholder="e.g. Ahmedabad Hub" />
+            </Field>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            <Field label="Cargo (kg)">
+              <Input required type="number" min={1} value={cargoWeight} onChange={(e) => setCargoWeight(Number(e.target.value))} />
+            </Field>
+            <Field label="Distance (km)">
+              <Input required type="number" min={1} value={plannedDistance} onChange={(e) => setPlannedDistance(Number(e.target.value))} />
+            </Field>
+            <Field label="Revenue (₹)">
+              <Input required type="number" min={0} value={revenue} onChange={(e) => setRevenue(Number(e.target.value))} />
+            </Field>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-3 border-t border-[var(--color-border)]">
+            <Button type="button" variant="secondary" onClick={() => setCreateModalOpen(false)}>Cancel</Button>
+            <Button type="submit">
+              <Plus size={14} />
+              Draft Route
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* ── Dispatch Asset Modal ── */}
       <Modal
         open={dispatchModalOpen}
         onClose={() => setDispatchModalOpen(false)}
-        title={`Smart Dispatch Asset: ${selectedTrip?.trip_code}`}
+        title={`Dispatch Asset — ${selectedTrip?.trip_code}`}
+        width="max-w-md"
       >
         <form onSubmit={handleDispatch} className="space-y-4">
           {dispatchErrorMsg && <Banner tone="error">{dispatchErrorMsg}</Banner>}
 
           <Banner tone="info">
-            <strong>Smart Dispatch Assist:</strong> Dropdowns are auto-filtered to show only eligible vehicles (available, capacity &gt;= {selectedTrip?.cargo_weight_kg}kg) and drivers (available, license active).
+            <strong>Smart Dispatch Assist:</strong> Only eligible vehicles (capacity ≥ {selectedTrip?.cargo_weight_kg} kg, Available) and drivers (valid license, Available) are shown.
           </Banner>
 
-          <Field label="Assign Eligible Vehicle" hint="Showing Available vehicles with sufficient weight capacity">
-            <Select
-              required
-              value={dispatchVehicleId}
-              onChange={(e) => setDispatchVehicleId(e.target.value)}
-            >
-              <option value="">Select a Vehicle...</option>
+          <Field label="Assign Vehicle" hint="Available vehicles with sufficient capacity">
+            <Select required value={dispatchVehicleId} onChange={(e) => setDispatchVehicleId(e.target.value)}>
+              <option value="">Select a vehicle...</option>
               {eligibleVehicles.map((v) => (
                 <option key={v.id} value={v.id}>
-                  {v.name} ({v.reg_no}) — Type: {v.type}, Max Load: {v.max_capacity_kg} kg
+                  {v.name} ({v.reg_no}) — {v.type}, {v.max_capacity_kg} kg max
                 </option>
               ))}
             </Select>
           </Field>
 
-          <Field label="Assign Eligible Driver" hint="Showing Available drivers with valid licenses">
-            <Select
-              required
-              value={dispatchDriverId}
-              onChange={(e) => setDispatchDriverId(e.target.value)}
-            >
-              <option value="">Select a Driver...</option>
+          <Field label="Assign Driver" hint="Available drivers with active licenses">
+            <Select required value={dispatchDriverId} onChange={(e) => setDispatchDriverId(e.target.value)}>
+              <option value="">Select a driver...</option>
               {eligibleDrivers.map((d) => (
                 <option key={d.id} value={d.id}>
-                  {d.name} — Category: {d.license_category}, Safety Score: {d.safety_score}
+                  {d.name} — {d.license_category}, Score: {d.safety_score}
                 </option>
               ))}
             </Select>
           </Field>
 
-          {/* Manual / Over-ride Validation preview (Matches wireframe capacity error box instinct) */}
-          {selectedTrip && dispatchVehicleId && (
-            (() => {
-              const selectedV = vehicles.find((v) => v.id === dispatchVehicleId);
-              if (selectedV && selectedTrip.cargo_weight_kg > selectedV.max_capacity_kg) {
-                return (
-                  <Banner tone="error">
-                    <div className="font-semibold text-red-200">Capacity Violation:</div>
-                    Vehicle Capacity: {selectedV.max_capacity_kg} kg <br />
-                    Cargo Weight: {selectedTrip.cargo_weight_kg} kg <br />
-                    Capacity exceeded by {selectedTrip.cargo_weight_kg - selectedV.max_capacity_kg} kg — dispatch blocked.
-                  </Banner>
-                );
-              }
-              return null;
-            })()
-          )}
+          {/* Capacity validation preview */}
+          {selectedTrip && dispatchVehicleId && (() => {
+            const v = vehicles.find(v => v.id === dispatchVehicleId);
+            if (v && selectedTrip.cargo_weight_kg > v.max_capacity_kg) {
+              return (
+                <Banner tone="error">
+                  <div className="font-bold mb-1">⚠ Capacity Violation</div>
+                  Vehicle capacity: {v.max_capacity_kg} kg<br />
+                  Cargo weight: {selectedTrip.cargo_weight_kg} kg<br />
+                  Exceeded by <strong>{selectedTrip.cargo_weight_kg - v.max_capacity_kg} kg</strong> — dispatch blocked.
+                </Banner>
+              );
+            }
+            return null;
+          })()}
 
-          <div className="flex justify-end gap-2 pt-4 border-t border-[var(--color-border)]">
-            <Button type="button" variant="secondary" onClick={() => setDispatchModalOpen(false)}>
-              Cancel
-            </Button>
+          <div className="flex justify-end gap-2 pt-3 border-t border-[var(--color-border)]">
+            <Button type="button" variant="secondary" onClick={() => setDispatchModalOpen(false)}>Cancel</Button>
             <Button
               type="submit"
-              disabled={
-                (() => {
-                  if (!dispatchVehicleId) return true;
-                  const v = vehicles.find((x) => x.id === dispatchVehicleId);
-                  return v ? (selectedTrip ? selectedTrip.cargo_weight_kg > v.max_capacity_kg : true) : true;
-                })()
-              }
+              disabled={!dispatchVehicleId || (() => {
+                const v = vehicles.find(x => x.id === dispatchVehicleId);
+                return v ? (selectedTrip ? selectedTrip.cargo_weight_kg > v.max_capacity_kg : true) : true;
+              })()}
             >
+              <Send size={13} />
               Dispatch Trip
             </Button>
           </div>
         </form>
       </Modal>
 
-      {/* Complete Trip Modal */}
+      {/* ── Complete Trip Modal ── */}
       <Modal
         open={completeModalOpen}
         onClose={() => setCompleteModalOpen(false)}
-        title={`Complete Dispatched Route: ${selectedTrip?.trip_code}`}
+        title={`Complete Route — ${selectedTrip?.trip_code}`}
+        width="max-w-sm"
       >
         <form onSubmit={handleComplete} className="space-y-4">
           {completeErrorMsg && <Banner tone="error">{completeErrorMsg}</Banner>}
 
           <Banner tone="info">
-            Complete route logging: entering final odometer will update the vehicle's mileage registry. Entering fuel consumed will write an auto-calculated fuel expense.
+            Completing this route will update the vehicle's odometer and log a fuel expense automatically.
           </Banner>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Final Odometer Reading (km)" hint={`Must be >= ${vehicles.find((v) => v.id === selectedTrip?.vehicle_id)?.odometer_km} km`}>
-              <Input
-                required
-                type="number"
-                value={finalOdometer}
-                onChange={(e) => setFinalOdometer(Number(e.target.value))}
-              />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="Final Odometer (km)" hint={`Current: ${fmtNumber(vehicles.find(v => v.id === selectedTrip?.vehicle_id)?.odometer_km ?? 0)} km`}>
+              <Input required type="number" value={finalOdometer} onChange={(e) => setFinalOdometer(Number(e.target.value))} />
             </Field>
-
-            <Field label="Fuel Consumed (Liters)" hint="Saves fuel expense at ₹75/L">
-              <Input
-                required
-                type="number"
-                value={fuelConsumed}
-                onChange={(e) => setFuelConsumed(Number(e.target.value))}
-              />
+            <Field label="Fuel Consumed (L)" hint="Auto-logged at ₹75/L">
+              <Input required type="number" value={fuelConsumed} onChange={(e) => setFuelConsumed(Number(e.target.value))} />
             </Field>
           </div>
 
-          <div className="flex justify-end gap-2 pt-4 border-t border-[var(--color-border)]">
-            <Button type="button" variant="secondary" onClick={() => setCompleteModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit">
+          <div className="flex justify-end gap-2 pt-3 border-t border-[var(--color-border)]">
+            <Button type="button" variant="secondary" onClick={() => setCompleteModalOpen(false)}>Cancel</Button>
+            <Button type="submit" className="!bg-emerald-600 hover:!bg-emerald-500 !from-emerald-600 !to-emerald-600">
+              <CheckSquare size={13} />
               Complete Route
             </Button>
           </div>

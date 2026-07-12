@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useDb } from '../hooks/useDb';
 import { KpiCard } from '../components/KpiCard';
 import { Card, CustomSelect } from '../components/primitives';
+import { Search } from 'lucide-react';
 
 export default function Dashboard() {
   const db = useDb();
@@ -85,115 +86,115 @@ export default function Dashboard() {
   // ETA estimator
   const getEta = (tripCode: string, status: string) => {
     if (status === 'Completed' || status === 'Cancelled') return '—';
-    if (status === 'Draft') return 'Awaiting vehicle';
+    if (status === 'Draft') return 'Awaiting';
     const hash = tripCode.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
     const mins = (hash % 50) + 15;
-    return mins > 60 ? `1h ${mins - 60}m` : `${mins} min`;
+    return mins > 60 ? `1h ${mins - 60}m` : `${mins}m`;
   };
 
-  // Status badge classes matching the mockup
+  // Status badge classes
   const getBadgeCls = (status: string) => {
     switch (status) {
-      case 'On Trip':    return 'bg-blue-500 text-white';
-      case 'Completed':  return 'bg-emerald-600 text-white';
-      case 'Dispatched': return 'bg-sky-500 text-white';
+      case 'Dispatched': return 'bg-blue-500/15 text-blue-500 border border-blue-500/25';
+      case 'Completed':  return 'bg-emerald-500/15 text-emerald-500 border border-emerald-500/25';
       case 'Draft':      return 'bg-[var(--color-panel-2)] text-[var(--color-text-muted)] border border-[var(--color-border)]';
-      case 'Cancelled':  return 'bg-red-500 text-white';
-      default:           return 'bg-slate-400 text-white';
+      case 'Cancelled':  return 'bg-red-500/15 text-red-500 border border-red-500/25';
+      default:           return 'bg-slate-500/15 text-[var(--color-text-muted)] border border-[var(--color-border)]';
     }
   };
 
-  return (
-    <div className="space-y-5 animate-fade-in">
+  const statusBarData = [
+    { label: 'Available', count: statusDistribution.Available, color: 'bg-emerald-500' },
+    { label: 'On Trip',   count: statusDistribution['On Trip'], color: 'bg-blue-500' },
+    { label: 'In Shop',   count: statusDistribution['In Shop'], color: 'bg-amber-500' },
+    { label: 'Retired',   count: statusDistribution.Retired,   color: 'bg-red-500' },
+  ];
 
-      {/* Search + Filters Bar */}
-      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 border-b border-[var(--color-border)] pb-6">
+  return (
+    <div className="flex flex-col gap-5 animate-fade-in h-full">
+
+      {/* ── Single-line Filter Bar ── */}
+      <div className="flex items-center gap-2 flex-nowrap overflow-x-auto hide-scrollbar shrink-0">
         {/* Search */}
-        <div className="w-full xl:max-w-xs shrink-0">
+        <div className="relative shrink-0 w-56">
+          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-faint)] pointer-events-none" />
           <input
             type="text"
-            placeholder="Search trips, vehicles, drivers..."
+            placeholder="Search trips..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)] px-4 py-2.5 text-xs text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:border-orange-500 focus:outline-none focus:ring-4 focus:ring-orange-500/10 transition-all duration-200 shadow-sm"
+            className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-panel)] pl-8 pr-3 py-2 text-xs text-[var(--color-text)] placeholder:text-[var(--color-text-faint)] focus:border-orange-500 focus:outline-none focus:ring-4 focus:ring-orange-500/10 transition-all"
           />
         </div>
-
-        {/* Filters */}
-        <div className="flex flex-nowrap items-center gap-3 overflow-x-auto hide-scrollbar w-full xl:w-auto pb-2 xl:pb-0">
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-faint)] shrink-0 px-2">Filters</span>
-          <CustomSelect
-            value={vehicleType}
-            onChange={setVehicleType}
+        <span className="text-[10px] font-semibold uppercase tracking-widest text-[var(--color-text-faint)] shrink-0 pl-1">Filters:</span>
+        <CustomSelect value={vehicleType} onChange={setVehicleType}
+          options={[
+            { value: 'All', label: 'All Types' },
+            { value: 'Van', label: 'Van' },
+            { value: 'Truck', label: 'Truck' },
+            { value: 'Mini', label: 'Mini' },
+          ]}
+          className="w-32 shrink-0"
+        />
+        <CustomSelect value={vehicleStatus} onChange={setVehicleStatus}
+          options={[
+            { value: 'All', label: 'All Statuses' },
+            { value: 'Available', label: 'Available' },
+            { value: 'On Trip', label: 'On Trip' },
+            { value: 'In Shop', label: 'In Shop' },
+            { value: 'Retired', label: 'Retired' },
+          ]}
+          className="w-36 shrink-0"
+        />
+        {regions.length > 0 && (
+          <CustomSelect value={region} onChange={setRegion}
             options={[
-              { value: 'All', label: 'Vehicle Type: All' },
-              { value: 'Van', label: 'Van' },
-              { value: 'Truck', label: 'Truck' },
-              { value: 'Mini', label: 'Mini' },
-            ]}
-            className="w-40 shrink-0"
-          />
-          <CustomSelect
-            value={vehicleStatus}
-            onChange={setVehicleStatus}
-            options={[
-              { value: 'All', label: 'Status: All' },
-              { value: 'Available', label: 'Available' },
-              { value: 'On Trip', label: 'On Trip' },
-              { value: 'In Shop', label: 'In Shop' },
-              { value: 'Retired', label: 'Retired' },
-            ]}
-            className="w-40 shrink-0"
-          />
-          <CustomSelect
-            value={region}
-            onChange={setRegion}
-            options={[
-              { value: 'All', label: 'Region: All' },
+              { value: 'All', label: 'All Regions' },
               ...regions.map((r) => ({ value: r, label: r })),
             ]}
-            className="w-40 shrink-0"
+            className="w-36 shrink-0"
           />
-        </div>
+        )}
       </div>
 
-      {/* KPI Grid — 7 compact cards */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 stagger-children">
-        <KpiCard label="ACTIVE VEHICLES"        value={activeVehiclesCount}     accent="#3b82f6" onClick={() => handleKpiClick('fleet', 'fleet_status_filter', 'On Trip')} />
-        <KpiCard label="AVAILABLE VEHICLES"     value={availableVehiclesCount}  accent="#10b981" onClick={() => handleKpiClick('fleet', 'fleet_status_filter', 'Available')} />
-        <KpiCard label="VEHICLES IN MAINTENANCE" value={inMaintenanceCount}     accent="#f59e0b" onClick={() => handleKpiClick('fleet', 'fleet_status_filter', 'In Shop')} />
-        <KpiCard label="ACTIVE TRIPS"           value={activeTripsCount}        accent="#3b82f6" onClick={() => handleKpiClick('trips')} />
-        <KpiCard label="PENDING TRIPS"          value={pendingTripsCount}       accent="#6366f1" onClick={() => handleKpiClick('trips')} />
-        <KpiCard label="DRIVERS ON DUTY"        value={activeDriversCount}      accent="#10b981" onClick={() => handleKpiClick('drivers')} />
-        <KpiCard label="FLEET UTILIZATION"      value={`${fleetUtilization}%`}  accent={fleetUtilization > 75 ? '#10b981' : '#f59e0b'} onClick={() => handleKpiClick('analytics')} />
+      {/* ── KPI Row ── */}
+      <div className="grid grid-cols-4 sm:grid-cols-7 gap-3 shrink-0 stagger-children">
+        <KpiCard label="ACTIVE VEHICLES"      value={activeVehiclesCount}    accent="#3b82f6" onClick={() => handleKpiClick('fleet', 'fleet_status_filter', 'On Trip')} />
+        <KpiCard label="AVAILABLE VEHICLES"   value={availableVehiclesCount} accent="#10b981" onClick={() => handleKpiClick('fleet', 'fleet_status_filter', 'Available')} />
+        <KpiCard label="IN MAINTENANCE"       value={inMaintenanceCount}     accent="#f59e0b" onClick={() => handleKpiClick('fleet', 'fleet_status_filter', 'In Shop')} />
+        <KpiCard label="ACTIVE TRIPS"         value={activeTripsCount}       accent="#3b82f6" onClick={() => handleKpiClick('trips')} />
+        <KpiCard label="PENDING TRIPS"        value={pendingTripsCount}      accent="#6366f1" onClick={() => handleKpiClick('trips')} />
+        <KpiCard label="DRIVERS ON DUTY"      value={activeDriversCount}     accent="#10b981" onClick={() => handleKpiClick('drivers')} />
+        <KpiCard label="FLEET UTILIZATION"    value={`${fleetUtilization}%`} accent={fleetUtilization > 75 ? '#10b981' : '#f59e0b'} onClick={() => handleKpiClick('analytics')} />
       </div>
 
-      {/* Main Content: Recent Trips (left) + Vehicle Status (right) */}
-      <div className="grid gap-5 lg:grid-cols-12">
+      {/* ── Main Content: Trips Table + Fleet Overview ── */}
+      <div className="grid gap-4 lg:grid-cols-12 min-h-0 flex-1">
 
         {/* Recent Trips */}
-        <div className="lg:col-span-8">
-          <Card className="overflow-hidden border-[var(--color-border)] bg-[var(--color-panel)] hover:shadow-xl transition-shadow duration-300">
-            <div className="flex items-center justify-between border-b border-[var(--color-border)] px-6 py-4 bg-[var(--color-panel-2)]/50">
+        <div className="lg:col-span-8 min-h-0 flex flex-col">
+          <Card className="overflow-hidden border-[var(--color-border)] bg-[var(--color-panel)] flex flex-col min-h-0 h-full">
+            <div className="flex items-center justify-between border-b border-[var(--color-border)] px-5 py-3 bg-[var(--color-panel-2)] shrink-0">
               <h2 className="font-display text-xs font-bold uppercase tracking-widest text-[var(--color-text)]">
                 Recent Trips
               </h2>
               <span className="text-[10px] font-mono text-[var(--color-text-faint)]">{filteredTrips.length} total</span>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="overflow-auto flex-1">
               <table className="w-full text-left text-sm">
-                <thead>
+                <thead className="sticky top-0 z-10">
                   <tr className="border-b border-[var(--color-border)] bg-[var(--color-panel)] text-[var(--color-text-faint)] text-[10px] uppercase tracking-wider">
-                    <th className="px-6 py-3 font-semibold">Trip</th>
-                    <th className="px-6 py-3 font-semibold">Vehicle</th>
-                    <th className="px-6 py-3 font-semibold">Driver</th>
-                    <th className="px-6 py-3 font-semibold">Status</th>
-                    <th className="px-6 py-3 font-semibold text-right">ETA</th>
+                    <th className="px-5 py-3 font-semibold">Trip</th>
+                    <th className="px-5 py-3 font-semibold">Route</th>
+                    <th className="px-5 py-3 font-semibold">Vehicle</th>
+                    <th className="px-5 py-3 font-semibold">Driver</th>
+                    <th className="px-5 py-3 font-semibold">Status</th>
+                    <th className="px-5 py-3 font-semibold text-right">ETA</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {searchedTrips.slice(0, 8).map((trip) => {
+                  {searchedTrips.slice(0, 10).map((trip) => {
                     const vehicle = vehicles.find((v) => v.id === trip.vehicle_id);
                     const driver  = drivers.find((d) => d.id === trip.driver_id);
                     return (
@@ -201,21 +202,27 @@ export default function Dashboard() {
                         key={trip.id}
                         className="border-b border-[var(--color-border-soft)] hover:bg-[var(--color-panel-2)] transition-colors duration-150 cursor-default group"
                       >
-                        <td className="px-6 py-4 font-display font-bold text-[var(--color-text)] tracking-tight whitespace-nowrap">
+                        <td className="px-5 py-3 font-display font-bold text-xs text-[var(--color-text)] tracking-tight whitespace-nowrap">
                           {trip.trip_code}
                         </td>
-                        <td className="px-6 py-4 font-medium text-[var(--color-text)] whitespace-nowrap">
+                        <td className="px-5 py-3 max-w-[140px]">
+                          <div className="text-xs text-[var(--color-text)] font-medium truncate">
+                            {trip.source}
+                          </div>
+                          <div className="text-[10px] text-[var(--color-text-faint)] truncate">→ {trip.destination}</div>
+                        </td>
+                        <td className="px-5 py-3 text-xs font-medium text-[var(--color-text)] whitespace-nowrap">
                           {vehicle ? vehicle.name : <span className="text-[var(--color-text-faint)]">—</span>}
                         </td>
-                        <td className="px-6 py-4 font-medium text-[var(--color-text-muted)] whitespace-nowrap">
+                        <td className="px-5 py-3 text-xs text-[var(--color-text-muted)] whitespace-nowrap">
                           {driver ? driver.name : <span className="text-[var(--color-text-faint)]">—</span>}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${getBadgeCls(trip.status)} shadow-sm`}>
+                        <td className="px-5 py-3 whitespace-nowrap">
+                          <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${getBadgeCls(trip.status)}`}>
                             {trip.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 font-mono text-[11px] text-[var(--color-text-muted)] text-right whitespace-nowrap group-hover:text-[var(--color-text)] transition-colors">
+                        <td className="px-5 py-3 font-mono text-[10px] text-[var(--color-text-muted)] text-right whitespace-nowrap group-hover:text-[var(--color-text)] transition-colors">
                           {getEta(trip.trip_code, trip.status)}
                         </td>
                       </tr>
@@ -223,7 +230,7 @@ export default function Dashboard() {
                   })}
                   {searchedTrips.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="px-5 py-10 text-center text-[var(--color-text-faint)]">
+                      <td colSpan={6} className="px-5 py-10 text-center text-[var(--color-text-faint)] text-xs">
                         No trips found.
                       </td>
                     </tr>
@@ -234,70 +241,36 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* Vehicle Status sidebar */}
-        <div className="lg:col-span-4">
-          <Card className="p-6 border-[var(--color-border)] bg-[var(--color-panel)] hover:shadow-xl transition-shadow duration-300 h-full flex flex-col">
-            <div className="flex items-center justify-between mb-8">
+        {/* Fleet Overview */}
+        <div className="lg:col-span-4 min-h-0">
+          <Card className="p-5 border-[var(--color-border)] bg-[var(--color-panel)] h-full flex flex-col">
+            <div className="flex items-center justify-between mb-5 shrink-0">
               <h3 className="font-display text-xs font-bold uppercase tracking-widest text-[var(--color-text)]">
                 Fleet Overview
               </h3>
-              <span className="text-xs font-mono font-bold px-2 py-1 bg-[var(--color-panel-2)] rounded text-[var(--color-text-muted)]">
-                {totalFilteredVehicles} Total
+              <span className="text-xs font-mono font-bold px-2 py-0.5 bg-[var(--color-panel-2)] rounded border border-[var(--color-border)] text-[var(--color-text-muted)]">
+                {totalFilteredVehicles}
               </span>
             </div>
 
-            <div className="space-y-5">
-              {/* Available */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-[var(--color-text-muted)]">Available</span>
-                  <span className="font-mono font-bold text-[var(--color-text)]">{statusDistribution.Available}</span>
+            <div className="space-y-4 flex-1">
+              {statusBarData.map(({ label, count, color }) => (
+                <div key={label} className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-medium text-[var(--color-text-muted)]">{label}</span>
+                    <span className="font-mono font-bold text-[var(--color-text)]">{count}</span>
+                  </div>
+                  <div className="h-1.5 w-full rounded-full bg-[var(--color-panel-2)] overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${color} transition-all duration-700`}
+                      style={{ width: `${getPercent(count)}%` }}
+                    />
+                  </div>
                 </div>
-                <div className="h-2 w-full rounded-full bg-[var(--color-panel-2)] overflow-hidden">
-                  <div className="h-full rounded-full bg-emerald-500 transition-all duration-700"
-                    style={{ width: `${getPercent(statusDistribution.Available)}%` }} />
-                </div>
-              </div>
-
-              {/* On Trip */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-[var(--color-text-muted)]">On Trip</span>
-                  <span className="font-mono font-bold text-[var(--color-text)]">{statusDistribution['On Trip']}</span>
-                </div>
-                <div className="h-2 w-full rounded-full bg-[var(--color-panel-2)] overflow-hidden">
-                  <div className="h-full rounded-full bg-blue-500 transition-all duration-700"
-                    style={{ width: `${getPercent(statusDistribution['On Trip'])}%` }} />
-                </div>
-              </div>
-
-              {/* In Shop */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-[var(--color-text-muted)]">In Shop</span>
-                  <span className="font-mono font-bold text-[var(--color-text)]">{statusDistribution['In Shop']}</span>
-                </div>
-                <div className="h-2 w-full rounded-full bg-[var(--color-panel-2)] overflow-hidden">
-                  <div className="h-full rounded-full bg-amber-500 transition-all duration-700"
-                    style={{ width: `${getPercent(statusDistribution['In Shop'])}%` }} />
-                </div>
-              </div>
-
-              {/* Retired */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-[var(--color-text-muted)]">Retired</span>
-                  <span className="font-mono font-bold text-[var(--color-text)]">{statusDistribution.Retired}</span>
-                </div>
-                <div className="h-2 w-full rounded-full bg-[var(--color-panel-2)] overflow-hidden">
-                  <div className="h-full rounded-full bg-red-500 transition-all duration-700"
-                    style={{ width: `${getPercent(statusDistribution.Retired)}%` }} />
-                </div>
-              </div>
+              ))}
             </div>
           </Card>
         </div>
-
       </div>
     </div>
   );

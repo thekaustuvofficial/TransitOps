@@ -18,15 +18,15 @@ export function KpiCard({
     <div
       onClick={onClick}
       className={cx(
-        'relative overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] p-5 animate-rise-in',
-        'transition-all duration-300 ease-out flex flex-col justify-between h-full shadow-sm',
+        'relative overflow-hidden rounded-xl border border-[var(--color-border)] bg-[var(--color-panel)] p-4 animate-rise-in',
+        'transition-all duration-300 ease-out flex flex-col justify-between shadow-sm',
         onClick && 'cursor-pointer group',
         onClick && 'hover:-translate-y-1 hover:shadow-xl hover:border-[var(--color-border-soft)]',
       )}
     >
       {/* Dynamic gradient background */}
       <div 
-        className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none transition-opacity duration-300 group-hover:opacity-[0.08] dark:group-hover:opacity-[0.12]"
+        className="absolute inset-0 opacity-[0.04] dark:opacity-[0.06] pointer-events-none transition-opacity duration-300 group-hover:opacity-[0.09] dark:group-hover:opacity-[0.14]"
         style={{ background: `linear-gradient(135deg, ${accent} 0%, transparent 100%)` }}
       />
       
@@ -45,17 +45,18 @@ export function KpiCard({
       />
 
       <div className="relative z-10">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-text-muted)] mb-2 line-clamp-1 break-all" title={label}>
+        {/* Full label — no truncation, wraps to 2 lines max */}
+        <p className="text-[9px] font-bold uppercase tracking-widest text-[var(--color-text-muted)] mb-2 leading-tight line-clamp-2" title={label}>
           {label}
         </p>
         <p
-          className="text-3xl font-black tabular-nums tracking-tight font-display drop-shadow-sm"
+          className="text-2xl font-black tabular-nums tracking-tight font-display drop-shadow-sm leading-none"
           style={{ color: accent }}
         >
           {value}
         </p>
         {sub && (
-          <p className="mt-2 text-xs text-[var(--color-text-faint)] font-medium">
+          <p className="mt-1.5 text-[10px] text-[var(--color-text-faint)] font-medium">
             {sub}
           </p>
         )}
